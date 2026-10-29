@@ -8,7 +8,7 @@ Nada é atribuído direto a uma ASG: as tarefas entram em **listas**, e cada lis
 
 **Gestor**
 - **Controle**: progresso de todas as listas no dia (concluídas, justificadas, pendentes e atrasadas), quem assumiu cada lista, situação de cada ASG e justificativas do dia.
-- **Cômodos**: a gestão cria os cômodos e o que será feito em cada um (tarefa, instruções com uma etapa por linha, materiais, cobertura essencial e frequência sugerida). Os cômodos e as tarefas da planilha já vêm cadastrados.
+- **Cômodos**: a gestão cria os cômodos e o que será feito em cada um (tarefa, instruções com uma etapa por linha, materiais, se a foto é obrigatória e frequência sugerida). Os cômodos e as tarefas da planilha já vêm cadastrados.
 - **Listas**: crie quantas listas quiser. Em cada lista:
   - **Adicionar tarefas**: seletor com todas as tarefas por cômodo, com "Marcar todas" em cada cômodo. Depois, escolha entre usar a frequência sugerida de cada tarefa ou uma mesma repetição para todas;
   - a repetição de cada tarefa pode ser ajustada (uma vez, a cada N dias, dias da semana a cada N semanas, todo mês num dia, com início e término), e a tarefa pode ser pausada ou removida;
@@ -21,7 +21,7 @@ Nada é atribuído direto a uma ASG: as tarefas entram em **listas**, e cada lis
 **ASG**
 - Se tem só uma lista liberada, já fica com ela automaticamente. Se tem mais de uma, escolhe ao entrar qual vai assumir no dia. Se uma colega faltou, pode assumir mais de uma lista.
 - Vê as tarefas do dia dessas listas, separadas por cômodo, e pode trocar a lista enquanto não tiver registrado nada nela.
-- Conclui com foto ou justifica a não execução.
+- Conclui com foto (obrigatória ou opcional, conforme a tarefa) ou justifica a não execução.
 - Uma ocorrência anterior não concluída volta como atrasada, se a tarefa não se repetir no dia.
 - Finaliza o dia quando não há pendências. O histórico mostra os últimos 7 dias.
 
