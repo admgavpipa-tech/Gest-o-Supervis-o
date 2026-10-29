@@ -1,43 +1,44 @@
-# GAV - Protótipo de rotinas de limpeza
+# GAV - Gestão de rotinas de limpeza
 
-Protótipo HTML navegável da experiência de execução das tarefas de limpeza, com identidade visual do template GAV.
+Sistema HTML de arquivo único para a gestão atribuir tarefas de limpeza às ASGs e acompanhar a execução, com identidade visual do template GAV.
 
-## Direção definida
+## Como funciona
 
-O gestor definirá as tarefas da operação. A forma de cadastro e planejamento aguarda o detalhamento do responsável pelo projeto.
+O sistema tem dois perfis, com a mesma tela de entrada:
 
-A equipe de ASGs seguirá o fluxo já demonstrado: escolher local, consultar a tarefa e suas instruções, registrar foto ou justificar a não execução e finalizar o turno quando não houver registros pendentes.
+**Gestor** (controle geral)
+- **Controle**: progresso da equipe no dia, concluídas, justificadas, pendentes e atrasadas, situação de cada ASG e justificativas do dia.
+- **ASG**: cadastro das ASGs (nome, e-mail de acesso, senha e turno; ativar ou desativar) e, dentro de cada uma, as **atribuições**.
+- **Atribuição**: para qual ASG, qual tarefa (da planilha ou personalizada), local, instruções (uma etapa por linha), materiais, grupo de esforço, turno, cobertura essencial, observação e **quando**:
+  - não repetir (uma vez, em uma data);
+  - repetir a cada N dias;
+  - repetir em dias da semana, a cada N semanas;
+  - repetir todo mês em um dia, a cada N meses;
+  - data de início, término opcional e horário opcional. O resumo mostra as próximas datas antes de salvar.
+  - Atribuições podem ser editadas, pausadas ou excluídas. "Salvar e atribuir outra" mantém a repetição para cadastrar várias tarefas seguidas.
+- **Registros**: por dia e por ASG, com fotos, justificativas e o que ficou sem registro.
+- **Atividades**: as 131 atividades da planilha, com botão para atribuir. A frequência da planilha já sugere a repetição.
+- **Perfil**: trocar senha, exportar e importar backup.
 
-O cadastro pertence à operação. A distribuição considera as pessoas presentes, permitindo cobrir o essencial de vários locais quando uma ASG faltar. Uma tarefa não pertence permanentemente a uma pessoa.
+**ASG**
+- Vê somente as tarefas atribuídas a ela para o dia, separadas por local.
+- Conclui com foto ou justifica a não execução.
+- Uma ocorrência anterior não concluída volta como atrasada, se a atribuição não se repetir no dia.
+- Finaliza o turno quando não há pendências. O histórico mostra os últimos 7 dias.
 
-Não há interface funcional do gestor nesta versão. As opções de Ajustes são controles da demonstração, não permissões operacionais concedidas à ASG.
+## Acesso
 
-## Executar a prévia
+O acesso do gestor já vem cadastrado (e-mail `carlos.santos@gavresorts.com.br`). A senha não fica no arquivo em texto puro, apenas como hash. As ASGs recebem e-mail e senha no cadastro feito pelo gestor.
 
-Abra `index.html` no navegador. O e-mail e a senha de exemplo já estão preenchidos. Nenhuma conta real é acessada e nenhuma senha é enviada.
+## Limites desta versão
 
-O arquivo é independente: inclui as logos, os estilos e os dados necessários à demonstração.
+Os dados ficam salvos no navegador (localStorage) do aparelho em que o sistema é usado. Gestor e ASGs precisam usar o mesmo aparelho/navegador para enxergar os mesmos dados; o backup (Perfil > Exportar/Importar) permite levar os dados para outro aparelho. Para cada ASG usar o próprio celular com dados sincronizados, é necessário um banco compartilhado (por exemplo, Supabase ou Firebase).
 
-## O que pode ser experimentado
+O login roda no navegador e não substitui autenticação com servidor: quem tiver o arquivo consegue ler o cadastro de atividades e as marcas incorporadas.
 
-- Navegação por locais, tarefas e instruções.
-- Conclusão com uma foto escolhida no dispositivo ou com registro demonstrativo.
-- Justificativa de tarefa não realizada, distinta de limpeza concluída.
-- Fechamento bloqueado enquanto há tarefa sem conclusão ou justificativa.
-- Tarefas atrasadas sem duplicar uma atividade que se repete hoje.
-- Grupos de esforço 1, 2 e 3.
-- Consulta às 131 atividades da planilha e filtro por local e grupo.
-- Simulação de falta de uma ASG e alternância entre turno diurno e noturno.
+## Executar
 
-A agenda e a data mostradas são exemplos. Não há geração de agenda real a partir das frequências da planilha.
-
-## Registros e acesso
-
-Os registros são guardados somente no navegador do dispositivo. Não há sincronização de equipe, autenticação real, banco compartilhado ou controle de acesso por perfil.
-
-O login não protege o conteúdo do arquivo. A publicação deve considerar que o cadastro de atividades, materiais, instruções e as marcas incorporadas ficam acessíveis junto da demonstração.
-
-O uso real com gestor e equipe exigirá que as regras de definição das tarefas sejam detalhadas e que os registros sejam compartilhados de forma adequada entre os perfis.
+Abra `index.html` no navegador ou publique pelo GitHub Pages.
 
 ## Publicação com GitHub Pages
 
@@ -56,7 +57,7 @@ Referência: [Criar um site do GitHub Pages](https://docs.github.com/en/pages/ge
 
 ## Arquivos
 
-- `index.html`: protótipo completo.
+- `index.html`: sistema completo (gestor e ASG).
 - `.nojekyll`: configuração para arquivos estáticos.
 - `.gitignore`: arquivos locais excluídos do versionamento.
 - `README.md`: funcionamento, escopo e publicação.
