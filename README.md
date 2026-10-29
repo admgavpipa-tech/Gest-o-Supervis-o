@@ -15,7 +15,7 @@ Nada é atribuído direto a uma ASG: as tarefas entram em **listas**, e cada lis
   - **Liberar ASG**: escolha as ASGs que podem assumir a lista. Quem tem menos atividades aparece primeiro.
 - **ASG**: cadastro (nome, e-mail de acesso, senha, ativa ou inativa) e as listas que cada uma pode assumir.
 - **Calendário da ASG**: ao tocar no nome da ASG, aparece o calendário do mês. Nos dias passados, mostra o que ela fez (concluídas/total, com cor para tudo feito, com justificativa ou pendente). Nos dias futuros, mostra quantas tarefas estão previstas nas listas liberadas para ela. Ao tocar no dia, aparecem as tarefas daquele dia.
-- **Registros**: por dia e por lista, com quem assumiu, fotos, justificativas e o que ficou sem registro.
+- **Registros**: por dia e por lista, com quem assumiu, justificativas e o que ficou sem registro. Tarefas com foto mostram o ícone **Ver foto**, e a imagem só é baixada ao tocar nele.
 - **Perfil**: trocar senha, **cadastrar outros gestores** (com acesso a toda a gestão; podem ser editados, desativados ou excluídos, menos o próprio acesso), exportar backup e importar cômodos e listas de um backup.
 
 **ASG**
