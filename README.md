@@ -21,7 +21,8 @@ Nada é atribuído direto a uma ASG: as tarefas entram em **listas**, e cada lis
 **ASG**
 - Se tem só uma lista liberada, já fica com ela automaticamente. Se tem mais de uma, escolhe ao entrar qual vai assumir no dia. Se uma colega faltou, pode assumir mais de uma lista.
 - Vê as tarefas do dia dessas listas, separadas por cômodo, e pode trocar a lista enquanto não tiver registrado nada nela.
-- Conclui com foto (obrigatória ou opcional, conforme a tarefa) ou justifica a não execução.
+- Conclui com foto (obrigatória ou opcional, conforme a tarefa) ou justifica a não execução. A foto é tirada na hora pela câmera, sem opção de escolher da galeria, e sai com data e hora gravadas.
+- Se a câmera ainda não foi liberada, a tela inicial mostra o botão **Permitir câmera**. Se o acesso foi bloqueado, aparecem as instruções para liberar no Android (Chrome) ou no iPhone (Safari).
 - Uma ocorrência anterior não concluída volta como atrasada, se a tarefa não se repetir no dia.
 - Finaliza o dia quando não há pendências. O histórico mostra os últimos 7 dias.
 
