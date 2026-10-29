@@ -4,27 +4,22 @@ Sistema HTML de arquivo único para a gestão atribuir tarefas de limpeza às AS
 
 ## Como funciona
 
-O sistema tem dois perfis, com a mesma tela de entrada:
+O sistema tem dois perfis, com a mesma tela de entrada.
 
-**Gestor** (controle geral)
-- **Controle**: progresso da equipe no dia, concluídas, justificadas, pendentes e atrasadas, situação de cada ASG e justificativas do dia.
-- **ASG**: cadastro das ASGs (nome, e-mail de acesso, senha e turno; ativar ou desativar) e, dentro de cada uma, as **atribuições**.
-- **Atribuição**: para qual ASG, qual tarefa (da planilha ou personalizada), local, instruções (uma etapa por linha), materiais, grupo de esforço, turno, cobertura essencial, observação e **quando**:
-  - não repetir (uma vez, em uma data);
-  - repetir a cada N dias;
-  - repetir em dias da semana, a cada N semanas;
-  - repetir todo mês em um dia, a cada N meses;
-  - data de início, término opcional e horário opcional. O resumo mostra as próximas datas antes de salvar.
-  - Atribuições podem ser editadas, pausadas ou excluídas. "Salvar e atribuir outra" mantém a repetição para cadastrar várias tarefas seguidas.
+**Gestor**
+- **Controle**: progresso da equipe no dia (concluídas, justificadas, pendentes e atrasadas), situação de cada ASG e justificativas do dia.
+- **Cômodos**: a gestão cria os cômodos e o que será feito em cada um (tarefa, instruções com uma etapa por linha, materiais, cobertura essencial e frequência sugerida). Os cômodos e as tarefas da planilha já vêm cadastrados.
+- **Distribuir**: todas as tarefas numa lista, cada uma com um seletor de ASG. O número ao lado do nome mostra quantas atividades ela já tem. Há filtro por cômodo e para ver só as tarefas sem ASG.
+- **ASG**: cadastro (nome, e-mail de acesso, senha, ativa ou inativa). Na página da ASG, "Escolher tarefas" mostra todas as tarefas para marcar o que fica com ela.
+- **Listas**: as tarefas de cada ASG ficam numa lista, onde a repetição de cada uma pode ser ajustada (uma vez, a cada N dias, dias da semana a cada N semanas, todo mês num dia, com início e término). Uma lista inteira pode ser transferida para outra ASG quando houver troca. A tela de escolha mostra primeiro quem tem menos atividades. O histórico anterior continua com a ASG de antes.
 - **Registros**: por dia e por ASG, com fotos, justificativas e o que ficou sem registro.
-- **Atividades**: as 131 atividades da planilha, com botão para atribuir. A frequência da planilha já sugere a repetição.
 - **Perfil**: trocar senha, exportar e importar backup.
 
 **ASG**
-- Vê somente as tarefas atribuídas a ela para o dia, separadas por local.
+- Vê somente as tarefas do dia, separadas por cômodo.
 - Conclui com foto ou justifica a não execução.
-- Uma ocorrência anterior não concluída volta como atrasada, se a atribuição não se repetir no dia.
-- Finaliza o turno quando não há pendências. O histórico mostra os últimos 7 dias.
+- Uma ocorrência anterior não concluída volta como atrasada, se a tarefa não se repetir no dia.
+- Finaliza o dia quando não há pendências. O histórico mostra os últimos 7 dias.
 
 ## Acesso
 
