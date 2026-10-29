@@ -19,7 +19,7 @@ Nada é atribuído direto a uma ASG: as tarefas entram em **listas**, e cada lis
 - **Perfil**: trocar senha, exportar e importar backup.
 
 **ASG**
-- Ao entrar, escolhe a lista que vai assumir no dia, entre as liberadas para ela. Se uma colega faltou, pode assumir mais de uma lista.
+- Se tem só uma lista liberada, já fica com ela automaticamente. Se tem mais de uma, escolhe ao entrar qual vai assumir no dia. Se uma colega faltou, pode assumir mais de uma lista.
 - Vê as tarefas do dia dessas listas, separadas por cômodo, e pode trocar a lista enquanto não tiver registrado nada nela.
 - Conclui com foto ou justifica a não execução.
 - Uma ocorrência anterior não concluída volta como atrasada, se a tarefa não se repetir no dia.
