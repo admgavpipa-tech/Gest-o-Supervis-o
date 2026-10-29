@@ -155,7 +155,8 @@ const activeItems=l=>liveItems(l).filter(i=>i.active&&taskById(i.taskId));
 function retireItem(l,i){if(i.start<today()&&String(i.created).slice(0,10)<today()){i.removed=true;i.active=false;i.end=addDays(today(),-1)}else l.items=l.items.filter(x=>x!==i)}
 function asgLists(u){const id=u.id||u;return db.lists.filter(l=>(l.asgIds||[]).includes(id))}
 function activityCount(asgId){return asgLists(asgId).reduce((n,l)=>n+activeItems(l).length,0)}
-function pickOf(asgId,date=today()){return db.picks[`${date}:${asgId}`]}
+// Uma escolha só vale se ainda existir alguma das listas escolhidas (listas apagadas ou recriadas não contam).
+function pickOf(asgId,date=today()){const p=db.picks[`${date}:${asgId}`];return p&&(p.lists||[]).some(id=>listById(id))?p:null}
 // Quem tem uma única lista liberada assume essa lista automaticamente (hoje e nos próximos dias).
 function soleList(asgId){const ls=asgLists(asgId);return ls.length===1?ls[0]:null}
 function assumedLists(asgId,date=today()){const p=pickOf(asgId,date);if(p)return p.lists.map(listById).filter(Boolean);const one=date>=today()&&soleList(asgId);return one?[one]:[]}
