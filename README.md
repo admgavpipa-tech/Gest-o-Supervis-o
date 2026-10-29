@@ -4,19 +4,22 @@ Sistema HTML de arquivo único para a gestão atribuir tarefas de limpeza às AS
 
 ## Como funciona
 
-O sistema tem dois perfis, com a mesma tela de entrada.
+Nada é atribuído direto a uma ASG: as tarefas entram em **listas**, e cada lista é liberada para uma ou mais ASGs. Ao entrar, a ASG escolhe qual lista vai assumir no dia.
 
 **Gestor**
-- **Controle**: progresso da equipe no dia (concluídas, justificadas, pendentes e atrasadas), situação de cada ASG e justificativas do dia.
+- **Controle**: progresso de todas as listas no dia (concluídas, justificadas, pendentes e atrasadas), quem assumiu cada lista, situação de cada ASG e justificativas do dia.
 - **Cômodos**: a gestão cria os cômodos e o que será feito em cada um (tarefa, instruções com uma etapa por linha, materiais, cobertura essencial e frequência sugerida). Os cômodos e as tarefas da planilha já vêm cadastrados.
-- **Distribuir**: todas as tarefas numa lista, cada uma com um seletor de ASG. O número ao lado do nome mostra quantas atividades ela já tem. Há filtro por cômodo e para ver só as tarefas sem ASG.
-- **ASG**: cadastro (nome, e-mail de acesso, senha, ativa ou inativa). Na página da ASG, "Escolher tarefas" mostra todas as tarefas para marcar o que fica com ela.
-- **Listas**: as tarefas de cada ASG ficam numa lista, onde a repetição de cada uma pode ser ajustada (uma vez, a cada N dias, dias da semana a cada N semanas, todo mês num dia, com início e término). Uma lista inteira pode ser transferida para outra ASG quando houver troca. A tela de escolha mostra primeiro quem tem menos atividades. O histórico anterior continua com a ASG de antes.
-- **Registros**: por dia e por ASG, com fotos, justificativas e o que ficou sem registro.
+- **Listas**: crie quantas listas quiser. Em cada lista:
+  - **Adicionar tarefas**: seletor com todas as tarefas por cômodo, com "Marcar todas" em cada cômodo. Depois, escolha entre usar a frequência sugerida de cada tarefa ou uma mesma repetição para todas;
+  - a repetição de cada tarefa pode ser ajustada (uma vez, a cada N dias, dias da semana a cada N semanas, todo mês num dia, com início e término), e a tarefa pode ser pausada ou removida;
+  - **Liberar ASG**: escolha as ASGs que podem assumir a lista. Quem tem menos atividades aparece primeiro.
+- **ASG**: cadastro (nome, e-mail de acesso, senha, ativa ou inativa) e as listas que cada uma pode assumir.
+- **Registros**: por dia e por lista, com quem assumiu, fotos, justificativas e o que ficou sem registro.
 - **Perfil**: trocar senha, exportar e importar backup.
 
 **ASG**
-- Vê somente as tarefas do dia, separadas por cômodo.
+- Ao entrar, escolhe a lista que vai assumir no dia, entre as liberadas para ela. Se uma colega faltou, pode assumir mais de uma lista.
+- Vê as tarefas do dia dessas listas, separadas por cômodo, e pode trocar a lista enquanto não tiver registrado nada nela.
 - Conclui com foto ou justifica a não execução.
 - Uma ocorrência anterior não concluída volta como atrasada, se a tarefa não se repetir no dia.
 - Finaliza o dia quando não há pendências. O histórico mostra os últimos 7 dias.
