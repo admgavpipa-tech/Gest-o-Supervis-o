@@ -124,5 +124,16 @@ async function privatePhotoUrl(value){const path=photoPath(value);if(!path)throw
 async function hydratePhotos(){for(const img of document.querySelectorAll('img[data-private-photo]')){const value=img.dataset.privatePhoto;delete img.dataset.privatePhoto;try{const url=await privatePhotoUrl(value);if(!img.isConnected)continue;img.src=url;img.addEventListener('load',()=>img.previousElementSibling?.classList.contains('photo-loading')&&img.previousElementSibling.remove(),{once:true})}catch(e){img.alt='Não foi possível carregar a foto. Feche e abra novamente.';if(img.previousElementSibling?.classList.contains('photo-loading'))img.previousElementSibling.textContent=img.alt}}}
 async function uploadPhoto(t,dataUrl){const blob=await(await fetch(dataUrl)).blob(),path=`${me().id}/${today()}/${t.aid}-${randomHex(8)}.jpg`;const {error}=await sb.storage.from('fotos').upload(path,blob,{contentType:'image/jpeg',upsert:false});if(error)throw error;return path}
 async function confirmPhoto(button){const t=getTasks().find(t=>t.key===photoTask);if(!t||!stagedPhoto||closed())return;button.disabled=true;button.textContent='Enviando e salvando…';try{const path=await uploadPhoto(t,stagedPhoto);await saveRecord(t,'done',{photo:path})}catch(e){toast('A foto ainda não foi salva. Confira a conexão e tente novamente.')}finally{if(button.isConnected){button.disabled=false;button.textContent='Confirmar e concluir'}}}
+// Fotos com mais de 30 dias: a gestão apaga uma vez por dia ao abrir o app (regras em supabase/photo-retention.sql).
+async function purgeOldPhotos(){
+ if(!isManager())return;const mark=`gav-limpeza-fotos:${today()}`;if(readKey(mark))return;
+ try{
+  for(let round=0;round<20;round++){const {data,error}=await sb.rpc('gav_expired_photos');if(error)throw error;
+   const paths=(data||[]).map(x=>typeof x==='string'?x:Object.values(x)[0]).filter(Boolean);if(!paths.length)break;
+   const r=await sb.storage.from('fotos').remove(paths);if(r.error)throw r.error;if(paths.length<500)break}
+  const {error}=await sb.rpc('gav_forget_missing_photos');if(error)throw error;
+  try{localStorage.setItem(mark,'1')}catch(e){}
+ }catch(e){console.warn('Limpeza de fotos antigas não concluída:',e.message)}
+}
 async function exportBackup(){if(saving||pendingSave){toast('Salve as alterações pendentes antes de exportar.');return}try{const [records,picks,closedRows,hist]=await Promise.all([fetchAll('records'),fetchAll('picks'),fetchAll('closed'),fetchAll('config_history','*',q=>q,'version')]);download(`gav-gestao-backup-${today()}.json`,JSON.stringify({version:6,exported:new Date().toISOString(),...db,configHistory:hist,records:Object.fromEntries(records.map(x=>[x.key,x.data])),picks:Object.fromEntries(picks.map(x=>[x.key,{lists:x.lists,at:x.at}])),closed:Object.fromEntries(closedRows.map(x=>[x.key,{time:x.time}]))}));toast('Backup completo exportado.')}catch(e){toast('Não foi possível exportar. Nenhum backup parcial foi gerado.')}}
 const syncStyle=document.createElement('style');syncStyle.textContent='.sync-notice{position:fixed;z-index:1000;top:8px;left:50%;transform:translateX(-50%);width:min(94%,640px);background:#fff5dd;color:#423018;padding:12px 16px;border:1px solid #c59a5d;border-radius:12px;box-shadow:0 4px 20px #0002;font-size:14px}.sync-notice[hidden]{display:none}.sync-notice button{margin-top:8px}';document.head.appendChild(syncStyle);

@@ -10,7 +10,7 @@ test('banco: autorização, fechamento, concorrência, fotos e histórico',async
  create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
  grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;
  create table storage.buckets(id text primary key,name text,public boolean);
- create table storage.objects(id uuid default gen_random_uuid(),bucket_id text,name text);
+ create table storage.objects(id uuid default gen_random_uuid(),bucket_id text,name text,created_at timestamptz default now());
  alter table storage.objects enable row level security;
  grant usage on schema storage to authenticated,anon;grant select,insert,update,delete on storage.objects to authenticated,anon;
  create publication supabase_realtime;`);
@@ -64,6 +64,23 @@ test('banco: autorização, fechamento, concorrência, fotos e histórico',async
   assert.equal(legacy.snapshot.title,'Fotografar');assert.match(legacy.photo,/antiga\/foto.jpg/);
   const orphan=(await db.query('select data from records where key=$1',[prev+':removido'])).rows[0].data;
   assert.equal(orphan.snapshot.listId,'historico-anterior');assert.equal(orphan.snapshot.title,'Atividade de cadastro anterior');assert.match(orphan.photo,/antiga\/outra.jpg/);
+ });
+ await t.test('fotos com mais de 30 dias: só a gestão apaga e o registro fica marcado',async()=>{
+  await owner();await db.exec(fs.readFileSync(path.join(root,'supabase/photo-retention.sql'),'utf8'));
+  const old=(await db.query('select (gav_today()-31)::text as d')).rows[0].d,day=(await db.query('select gav_today()::text as d')).rows[0].d;
+  await db.query(`insert into storage.objects(bucket_id,name,created_at) values('fotos',$1,now()-interval '31 days')`,[b+'/velha.jpg']);
+  await db.query('insert into records(key,date,data) values($1,$2,$3)',[old+':velha',old,JSON.stringify({aid:'velha',by:b,date:old,status:'done',photo:b+'/velha.jpg'})]);
+  const exists=async name=>{await owner();return (await db.query('select 1 from storage.objects where name=$1',[name])).rows.length===1};
+  await actor(b);await rejected(()=>db.query('select gav_expired_photos()'),/Somente a gestão/);await rejected(()=>db.query('select gav_forget_missing_photos()'),/Somente a gestão/);
+  await db.query('delete from storage.objects where name=$1',[b+'/velha.jpg']);assert.equal(await exists(b+'/velha.jpg'),true);
+  await actor(manager);assert.deepEqual((await db.query('select gav_expired_photos() as p')).rows.map(r=>r.p),[b+'/velha.jpg']);
+  await db.query('delete from storage.objects where name=$1',[b+'/foto.jpg']);assert.equal(await exists(b+'/foto.jpg'),true);
+  await actor(manager);await db.query('delete from storage.objects where name=$1',[b+'/velha.jpg']);assert.equal(await exists(b+'/velha.jpg'),false);
+  await actor(manager);await db.query('select gav_forget_missing_photos()');await owner();
+  const expired=(await db.query('select data from records where key=$1',[old+':velha'])).rows[0].data;
+  assert.equal(expired.photoExpired,true);assert.equal('photo' in expired,false);
+  const kept=(await db.query('select data from records where key=$1',[day+':j'])).rows[0].data;
+  assert.equal(kept.photo,b+'/foto.jpg');assert.equal(kept.photoExpired,undefined);
  });
  }finally{await db.close()}
 });

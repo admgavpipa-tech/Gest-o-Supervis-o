@@ -52,6 +52,12 @@ Execute `supabase/reliability.sql` no SQL Editor do projeto existente e publique
 
 O procedimento torna o bucket privado e bloqueia as gravações diretas da versão antiga; por isso banco e arquivos do site devem ser atualizados juntos. Navegadores já abertos devem recarregar a página depois da publicação. Dados e descrições removidos antes desta atualização não podem ser reconstruídos automaticamente; os registros antigos ainda vinculados a tarefas recebem os metadados disponíveis na instalação.
 
+### Fotos apagadas após 30 dias
+
+Execute `supabase/photo-retention.sql` no SQL Editor (uma vez; pode ser repetido). Depois disso, quando um gestor abre o app, uma vez por dia, as fotos com mais de 30 dias são apagadas do armazenamento. O registro da tarefa continua no histórico, marcado como "Foto apagada após 30 dias". O banco só permite que a gestão apague fotos vencidas; ASGs não apagam nenhuma.
+
+Enquanto o script não for executado, o app segue normalmente e apenas não faz a limpeza. Se nenhum gestor abrir o app por alguns dias, a limpeza acontece no próximo acesso.
+
 ### Testes
 
 Com Node.js e as dependências de desenvolvimento instaladas, execute `npm test`. Os testes do banco usam PostgreSQL local via PGlite, sem tocar nos dados reais. Cobrem autorização entre ASGs, impedimento de fechamento pendente, gravação atômica, foto obrigatória, privacidade do armazenamento, histórico, conflitos de versão, recuperação de atraso e repetição da atualização.
@@ -83,5 +89,6 @@ Referência: [Criar um site do GitHub Pages](https://docs.github.com/en/pages/ge
 - `.gitignore`: arquivos locais excluídos do versionamento.
 - `supabase/schema.sql`: tabelas, regras de acesso, funções da gestão e armazenamento das fotos no Supabase.
 - `supabase/reliability.sql`: atualização transacional para instalações existentes.
+- `supabase/photo-retention.sql`: exclusão das fotos com mais de 30 dias.
 - `tests/`: testes isolados de regressão e do banco.
 - `README.md`: funcionamento, escopo e publicação.
