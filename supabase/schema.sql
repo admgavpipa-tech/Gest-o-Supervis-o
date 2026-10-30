@@ -389,4 +389,14 @@ update records r set data=r.data||jsonb_build_object('snapshot',jsonb_build_obje
  'repeat',meta.i->'repeat','start',meta.i->>'start','end',meta.i->>'end','notes',meta.i->>'notes',
  'overdue',left(r.key,7)='atraso:','previousDate',case when left(r.key,7)='atraso:' then split_part(r.key,':',3) else null end))
 from meta where meta.i->>'id'=r.data->>'aid' and not(r.data ? 'snapshot') and r.data ? 'by';
+-- Não esconder comprovantes de cadastros que já tinham sido apagados antes desta atualização.
+-- A descrição perdida é identificada como indisponível, sem atribuir uma tarefa inventada.
+update records r set data=r.data||jsonb_build_object('snapshot',jsonb_build_object(
+ 'key',r.key,'date',r.date,'aid',r.data->>'aid','listId','historico-anterior','listName','Cadastros anteriores',
+ 'title',coalesce(nullif(r.data->>'title',''),'Atividade de cadastro anterior'),
+ 'local',coalesce(nullif(r.data->>'local',''),'Cadastro anterior'),
+ 'instructions','O cadastro desta atividade foi removido antes da atualização. A descrição original não está disponível.',
+ 'materials','','photoRequired',false,'repeat',jsonb_build_object('type','once'),'start',r.date,'end',r.date,
+ 'overdue',left(r.key,7)='atraso:','previousDate',case when left(r.key,7)='atraso:' then split_part(r.key,':',3) else null end))
+where not(r.data ? 'snapshot') and r.data ? 'by' and r.data->>'status' in ('done','justified');
 commit;
