@@ -1,0 +1,6 @@
+{
+  "name": "gav-gestao-limpeza",
+  "private": true,
+  "scripts": { "test": "node --test tests/*.test.cjs" },
+  "devDependencies": { "@electric-sql/pglite": "0.5.13" }
+}

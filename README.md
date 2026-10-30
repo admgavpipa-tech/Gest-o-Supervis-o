@@ -1,6 +1,6 @@
 # GAV - Gestão de rotinas de limpeza
 
-Sistema HTML de arquivo único para a gestão atribuir tarefas de limpeza às ASGs e acompanhar a execução, com identidade visual do template GAV.
+Aplicativo estático em HTML e JavaScript para a gestão atribuir tarefas de limpeza às ASGs e acompanhar a execução, com identidade visual do template GAV. Publique `index.html` e `reliability.js` juntos.
 
 ## Como funciona
 
@@ -32,7 +32,11 @@ Os dados ficam no Supabase (projeto `lwegjqiavjfprrapxjle`): login, cômodos, ta
 
 - A chave usada no `index.html` é a chave pública (publishable). As permissões ficam nas regras do banco (`supabase/schema.sql`): somente gestores alteram cômodos, listas e cadastros; a equipe registra tarefas e escolhe a própria lista.
 - O primeiro gestor é `carlos.santos@gavresorts.com.br`. Outros gestores e as ASGs são cadastrados pelo sistema.
-- As fotos ficam no bucket público `fotos`, com nomes aleatórios.
+- As fotos ficam no bucket privado `fotos`. O aplicativo pede uma URL temporária de 2 minutos para exibir cada comprovante. Links públicos antigos são convertidos em caminhos para leitura autenticada.
+- Conclusões, escolhas e fechamentos são validados no banco por `gav_apply_changes`, em uma transação. A interface só confirma o sucesso após a resposta do servidor. Uma falha de conexão mantém a edição pendente neste aparelho para nova tentativa.
+- Alterações da programação exigem a versão que o gestor carregou. Um conflito é recusado, a versão atual é recarregada e a edição local fica disponível para baixar e conferir.
+- O histórico guarda versões da programação e uma cópia da tarefa em cada conclusão/justificativa. Excluir um acesso arquiva o perfil, preservando a autoria e os fechamentos.
+- Consultas e backup são paginados; o backup inclui os registros disponíveis no servidor, sem o corte anterior de 120 dias. Os arquivos das fotos continuam no armazenamento e não são incorporados ao JSON exportado.
 
 ### Preparar o Supabase (uma vez)
 
@@ -41,6 +45,16 @@ Os dados ficam no Supabase (projeto `lwegjqiavjfprrapxjle`): login, cômodos, ta
 3. **Authentication > Users > Add user > Create new user**: e-mail `carlos.santos@gavresorts.com.br`, a senha do gestor e **Auto Confirm User** marcado. Ele vira gestor automaticamente.
 
 No primeiro acesso do gestor, o sistema cria os cômodos e as tarefas da planilha. Se o navegador tinha dados da versão anterior, que guardava tudo localmente, os cômodos, tarefas e listas dessa versão são aproveitados. As ASGs precisam ser cadastradas de novo, porque as senhas antigas ficavam só no aparelho.
+
+### Atualizar uma instalação existente
+
+Execute `supabase/reliability.sql` no SQL Editor do projeto existente e publique a versão correspondente de `index.html` e `reliability.js`. O script usa uma transação e pode ser repetido. Não apaga registros nem fotos. Instalações novas podem executar o `schema.sql` completo, que já inclui esta atualização.
+
+O procedimento torna o bucket privado e bloqueia as gravações diretas da versão antiga; por isso banco e arquivos do site devem ser atualizados juntos. Navegadores já abertos devem recarregar a página depois da publicação. Dados e descrições removidos antes desta atualização não podem ser reconstruídos automaticamente; os registros antigos ainda vinculados a tarefas recebem os metadados disponíveis na instalação.
+
+### Testes
+
+Com Node.js e as dependências de desenvolvimento instaladas, execute `npm test`. Os testes do banco usam PostgreSQL local via PGlite, sem tocar nos dados reais. Cobrem autorização entre ASGs, impedimento de fechamento pendente, gravação atômica, foto obrigatória, privacidade do armazenamento, histórico, conflitos de versão, recuperação de atraso e repetição da atualização.
 
 ## Executar
 
@@ -64,7 +78,10 @@ Referência: [Criar um site do GitHub Pages](https://docs.github.com/en/pages/ge
 ## Arquivos
 
 - `index.html`: sistema completo (gestor e ASG).
+- `reliability.js`: sincronização, paginação, histórico preservado e acesso às fotos privadas.
 - `.nojekyll`: configuração para arquivos estáticos.
 - `.gitignore`: arquivos locais excluídos do versionamento.
 - `supabase/schema.sql`: tabelas, regras de acesso, funções da gestão e armazenamento das fotos no Supabase.
+- `supabase/reliability.sql`: atualização transacional para instalações existentes.
+- `tests/`: testes isolados de regressão e do banco.
 - `README.md`: funcionamento, escopo e publicação.
