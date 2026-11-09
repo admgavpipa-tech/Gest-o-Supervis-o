@@ -8,6 +8,7 @@ Nada é atribuído direto a uma ASG: as tarefas entram em **listas**, e cada lis
 
 **Gestor**
 - **Controle**: progresso de todas as listas no dia (concluídas, justificadas, pendentes e atrasadas), quem assumiu cada lista, situação de cada ASG e justificativas do dia.
+- **Limpar atrasadas** (só gestão): quando há tarefas atrasadas pendentes, o Controle mostra o botão **Limpar N tarefas atrasadas**. Elas deixam de ser cobradas das ASGs a partir do dia da limpeza; o dia original continua no histórico como sem registro. Atrasadas já concluídas ou justificadas no dia não mudam.
 - **Cômodos**: a gestão cria os cômodos e o que será feito em cada um (tarefa, instruções com uma etapa por linha, materiais, se a foto é obrigatória e frequência sugerida). Os cômodos e as tarefas da planilha já vêm cadastrados.
 - **Listas**: crie quantas listas quiser. Em cada lista:
   - **Adicionar tarefas**: seletor com todas as tarefas por cômodo, com "Marcar todas" em cada cômodo. Depois, escolha entre usar a frequência sugerida de cada tarefa ou uma mesma repetição para todas;
@@ -58,6 +59,10 @@ Execute `supabase/photo-retention.sql` no SQL Editor (uma vez; pode ser repetido
 
 Enquanto o script não for executado, o app segue normalmente e apenas não faz a limpeza. Se nenhum gestor abrir o app por alguns dias, a limpeza acontece no próximo acesso.
 
+### Limpar tarefas atrasadas
+
+Execute `supabase/clear-overdue.sql` no SQL Editor (uma vez; pode ser repetido) para ativar o botão **Limpar tarefas atrasadas** do gestor. Sem o script, o botão avisa que falta atualizar o banco. Instalações novas que executarem o `schema.sql` completo já recebem a função.
+
 ### Testes
 
 Com Node.js e as dependências de desenvolvimento instaladas, execute `npm test`. Os testes do banco usam PostgreSQL local via PGlite, sem tocar nos dados reais. Cobrem autorização entre ASGs, impedimento de fechamento pendente, gravação atômica, foto obrigatória, privacidade do armazenamento, histórico, conflitos de versão, recuperação de atraso e repetição da atualização.
@@ -90,5 +95,6 @@ Referência: [Criar um site do GitHub Pages](https://docs.github.com/en/pages/ge
 - `supabase/schema.sql`: tabelas, regras de acesso, funções da gestão e armazenamento das fotos no Supabase.
 - `supabase/reliability.sql`: atualização transacional para instalações existentes.
 - `supabase/photo-retention.sql`: exclusão das fotos com mais de 30 dias.
+- `supabase/clear-overdue.sql`: limpeza das tarefas atrasadas pela gestão.
 - `tests/`: testes isolados de regressão e do banco.
 - `README.md`: funcionamento, escopo e publicação.
