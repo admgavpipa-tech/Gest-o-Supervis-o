@@ -124,14 +124,6 @@ async function privatePhotoUrl(value){const path=photoPath(value);if(!path)throw
 async function hydratePhotos(){for(const img of document.querySelectorAll('img[data-private-photo]')){const value=img.dataset.privatePhoto;delete img.dataset.privatePhoto;try{const url=await privatePhotoUrl(value);if(!img.isConnected)continue;img.src=url;img.addEventListener('load',()=>img.previousElementSibling?.classList.contains('photo-loading')&&img.previousElementSibling.remove(),{once:true})}catch(e){img.alt='Não foi possível carregar a foto. Feche e abra novamente.';if(img.previousElementSibling?.classList.contains('photo-loading'))img.previousElementSibling.textContent=img.alt}}}
 async function uploadPhoto(t,dataUrl){const blob=await(await fetch(dataUrl)).blob(),path=`${me().id}/${today()}/${t.aid}-${randomHex(8)}.jpg`;const {error}=await sb.storage.from('fotos').upload(path,blob,{contentType:'image/jpeg',upsert:false});if(error)throw error;return path}
 async function confirmPhoto(button){const t=getTasks().find(t=>t.key===photoTask);if(!t||!stagedPhoto||closed())return;button.disabled=true;button.textContent='Enviando e salvando…';try{const path=await uploadPhoto(t,stagedPhoto);await saveRecord(t,'done',{photo:path})}catch(e){toast('A foto ainda não foi salva. Confira a conexão e tente novamente.')}finally{if(button.isConnected){button.disabled=false;button.textContent='Confirmar e concluir'}}}
-// A gestão limpa as atrasadas pendentes de hoje (regras em supabase/clear-overdue.sql).
-async function clearOverdue(){
- if(!isManager())return;if(saving||pendingSave){toast('Aguarde as alterações pendentes serem salvas.');return}
- const {data,error}=await sb.rpc('gav_clear_overdue');
- if(error){toast(/gav_clear_overdue|PGRST202|function/i.test(`${error.message} ${error.code}`)?'Falta atualizar o banco: execute supabase/clear-overdue.sql no SQL Editor do Supabase.':'Não foi possível limpar: '+error.message);return}
- try{await loadAll(true)}catch(e){console.error(e.message)}
- closeModal();render();toast(data?`${plural(data,'tarefa atrasada limpa','tarefas atrasadas limpas')}.`:'Não havia tarefas atrasadas pendentes.');
-}
 // Fotos com mais de 30 dias: a gestão apaga uma vez por dia ao abrir o app (regras em supabase/photo-retention.sql).
 async function purgeOldPhotos(){
  if(!isManager())return;const mark=`gav-limpeza-fotos:${today()}`;if(readKey(mark))return;

@@ -243,26 +243,4 @@ update records r set data=r.data||jsonb_build_object('snapshot',jsonb_build_obje
  'materials','','photoRequired',false,'repeat',jsonb_build_object('type','once'),'start',r.date,'end',r.date,
  'overdue',left(r.key,7)='atraso:','previousDate',case when left(r.key,7)='atraso:' then split_part(r.key,':',3) else null end))
 where not(r.data ? 'snapshot') and r.data ? 'by' and r.data->>'status' in ('done','justified');
--- A gestão limpa as tarefas atrasadas pendentes (o dia original continua no histórico).
-create or replace function public.gav_clear_overdue()
-returns integer language plpgsql security definer set search_path=public as $$
-declare actor uuid:=auth.uid(); d date:=gav_today(); ids jsonb; who text; e record; prevkey text; n integer:=0;
-begin
- if actor is null or not is_manager() then raise exception 'Somente a gestão pode limpar tarefas atrasadas.' using errcode='42501'; end if;
- perform pg_advisory_xact_lock(718293451);
- select coalesce(jsonb_agg(l->>'id'),'[]') into ids from app_state a cross join lateral jsonb_array_elements(coalesce(a.data->'lists','[]')) l where a.id=1;
- select name into who from profiles where id=actor;
- for e in select x.key,x.data from gav_expected(ids,d) x where coalesce((x.data->>'overdue')::boolean,false) loop
-  -- Atraso já concluído ou justificado hoje continua como está.
-  if exists(select 1 from records r where r.key=e.key and r.data->>'status' in ('done','justified')) then continue; end if;
-  prevkey:=(e.data->>'previousDate')||':'||(e.data->>'aid');
-  insert into records(key,date,data) values(prevkey,(e.data->>'previousDate')::date,
-   jsonb_build_object('status','missed','date',e.data->>'previousDate','aid',e.data->>'aid','dismissed',d,'dismissedBy',actor,'dismissedByName',who))
-   on conflict(key) do update set data=records.data||jsonb_build_object('dismissed',d,'dismissedBy',actor,'dismissedByName',who),updated_at=now();
-  n:=n+1;
- end loop;
- return n;
-end $$;
-revoke all on function public.gav_clear_overdue() from public,anon;
-grant execute on function public.gav_clear_overdue() to authenticated;
 commit;

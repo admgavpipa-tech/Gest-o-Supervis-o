@@ -59,10 +59,6 @@ Execute `supabase/photo-retention.sql` no SQL Editor (uma vez; pode ser repetido
 
 Enquanto o script não for executado, o app segue normalmente e apenas não faz a limpeza. Se nenhum gestor abrir o app por alguns dias, a limpeza acontece no próximo acesso.
 
-### Limpar tarefas atrasadas
-
-Execute `supabase/clear-overdue.sql` no SQL Editor (uma vez; pode ser repetido) para ativar o botão **Limpar tarefas atrasadas** do gestor. Sem o script, o botão avisa que falta atualizar o banco. Instalações novas que executarem o `schema.sql` completo já recebem a função.
-
 ### Testes
 
 Com Node.js e as dependências de desenvolvimento instaladas, execute `npm test`. Os testes do banco usam PostgreSQL local via PGlite, sem tocar nos dados reais. Cobrem autorização entre ASGs, impedimento de fechamento pendente, gravação atômica, foto obrigatória, privacidade do armazenamento, histórico, conflitos de versão, recuperação de atraso e repetição da atualização.
@@ -95,6 +91,5 @@ Referência: [Criar um site do GitHub Pages](https://docs.github.com/en/pages/ge
 - `supabase/schema.sql`: tabelas, regras de acesso, funções da gestão e armazenamento das fotos no Supabase.
 - `supabase/reliability.sql`: atualização transacional para instalações existentes.
 - `supabase/photo-retention.sql`: exclusão das fotos com mais de 30 dias.
-- `supabase/clear-overdue.sql`: limpeza das tarefas atrasadas pela gestão.
 - `tests/`: testes isolados de regressão e do banco.
 - `README.md`: funcionamento, escopo e publicação.
