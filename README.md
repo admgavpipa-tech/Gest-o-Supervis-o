@@ -19,7 +19,7 @@ Na tela de entrada, **Quero me cadastrar** abre o formulário: nome, e-mail, sen
 - São **duas contagens por dia**: uma no turno do dia e outra no da noite.
 - O garçom entra direto na tela **Contagem**. O turno já vem escolhido pelo horário e pelo que falta enviar. Ele digita a quantidade de cada item (teclado numérico; o "próximo" do teclado pula para o item seguinte), vê o progresso e o botão "Faltam N itens" leva ao primeiro em branco. O que foi digitado fica guardado no aparelho até o envio.
 - Ao enviar, a data, a hora e o nome do garçom são gravados pelo servidor. O turno enviado pode ser corrigido no mesmo dia. O garçom não vê histórico.
-- A gestão vê em **Registros → Contagem do salão** o calendário do mês (dias com as duas contagens, só uma ou nenhuma), filtro por turno, a tabela do dia com Dia, Noite e a diferença (noite − dia), e pode exportar o mês em CSV para o Excel. O Controle mostra a contagem de hoje dos dois turnos.
+- A gestão vê em **Registros → Contagem do salão** o calendário do mês (dias com as duas contagens, só uma ou nenhuma), filtro por turno, a tabela do dia com cada contagem e a **variação** em relação à contagem anterior (a do dia comparada com a noite anterior; a da noite, com o dia): ▼ vermelho quando diminuiu, ▲ verde quando aumentou. No topo aparecem as maiores quedas e reposições, e há o filtro “Só itens que mudaram”, e pode exportar o mês em CSV para o Excel. O Controle mostra a contagem de hoje dos dois turnos.
 - Os itens da contagem ficam em `COUNT_ITEMS`, no `index.html`, na ordem da planilha do salão.
 
 ## Como funciona
