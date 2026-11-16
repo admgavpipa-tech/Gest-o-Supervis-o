@@ -14,7 +14,7 @@ Para incluir outro perfil no futuro, acrescente-o na regra `profiles_role_check`
 
 ## Computador e celular
 
-No celular, o app usa a barra de navegação embaixo. No computador (telas a partir de 1040 px), vira um painel completo: menu lateral por área (Limpeza, Salão, Pessoas) com a marca e o usuário, barra do topo com o caminho da tela, a data e os avisos, conteúdo largo com cartões em grade, Controle com Salão e Limpeza lado a lado, contagem com o calendário ao lado da tabela, contagem do garçom em duas colunas e entrada com a tela dividida entre a marca e o formulário. O app fica sempre no tema claro.
+No celular, o app usa a barra de navegação embaixo. No computador (telas a partir de 1040 px), vira um painel completo: menu lateral por área (Limpeza, Salão, Pessoas) com a marca e o usuário, barra do topo com o caminho da tela, a data e os avisos, conteúdo largo com cartões em grade, Controle com Salão e Limpeza lado a lado, contagem com o calendário ao lado da tabela, contagem do garçom em duas colunas e entrada com a tela dividida entre a marca e o formulário. O app fica sempre no tema claro, com as fontes Fraunces (títulos) e Figtree (texto).
 
 ## Primeiro acesso
 
@@ -28,6 +28,7 @@ Na tela de entrada, **Quero me cadastrar** abre o formulário: nome, e-mail, sen
 
 - São **duas contagens por dia**: uma no turno do dia e outra no da noite.
 - O garçom entra direto na tela **Contagem**. O turno já vem escolhido pelo horário e pelo que falta enviar. Ele digita a quantidade de cada item (teclado numérico; o "próximo" do teclado pula para o item seguinte), vê o progresso e o botão "Faltam N itens" leva ao primeiro em branco. O que foi digitado fica guardado no aparelho até o envio.
+- A tela cumprimenta pelo nome e pelo horário e diz quanto tempo leva. Durante a contagem, o app comemora cada grupo concluído e avisa quando faltam poucos itens (“Quase lá! Faltam só 3”).
 - Os itens aparecem **agrupados** (Bebidas, Café e açúcar, Petiscos, Louças e taças, Descartáveis), com atalhos por grupo, botões − e +, e marcação verde do que já foi contado.
 - **Nada fica sem contar:** todo item precisa de um número, inclusive o zero; os que faltam ficam em vermelho e o botão leva ao primeiro. O servidor também recusa contagem incompleta. Se o garçom tentar sair ou fechar a página com a contagem pela metade, o app pergunta antes; os números ficam salvos no celular e, ao voltar, ele continua de onde parou.
 - Antes de enviar, ele confere todos os números. No fim da lista há um campo de **observação** opcional (até 500 caracteres), visto pela gestão no Controle, em Registros e no CSV.
