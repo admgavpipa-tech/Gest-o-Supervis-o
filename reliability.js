@@ -74,7 +74,8 @@ async function persist(){
 }
 async function refresh(){
  if(!authId)return;if(saving||pendingSave)return;
- const busy=document.querySelector('.dialog')||view.page==='g-add'||document.activeElement?.matches?.('input,textarea,select');
+ // Contagem em edição: não redesenha a tela no meio dela (o andamento vai ao servidor por conta própria).
+ const busy=document.querySelector('.dialog')||view.page==='g-add'||document.activeElement?.matches?.('input,textarea,select')||document.querySelector('#count-form[data-dirty="1"]');
  if(busy){clearTimeout(refresh.t);refresh.t=setTimeout(refresh,2000);return}
  try{await loadAll();await loadCounts()}catch(e){console.error(e.message);return}
  if(!me()){signOutLocal('Seu acesso foi desativado.');return}

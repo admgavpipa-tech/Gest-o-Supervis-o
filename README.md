@@ -32,7 +32,10 @@ Na tela de entrada, **Quero me cadastrar** abre o formulário: nome, e-mail, sen
 - Os itens aparecem **agrupados** (Bebidas, Café e açúcar, Petiscos, Louças e taças, Descartáveis), com atalhos por grupo, botões − e +, e marcação verde do que já foi contado.
 - **Nada fica sem contar:** todo item precisa de um número, inclusive o zero; os que faltam ficam em vermelho e o botão leva ao primeiro. O servidor também recusa contagem incompleta. Se o garçom tentar sair ou fechar a página com a contagem pela metade, o app pergunta antes; os números ficam salvos no celular e, ao voltar, ele continua de onde parou.
 - Antes de enviar, ele confere todos os números. No fim da lista há um campo de **observação** opcional (até 500 caracteres), visto pela gestão no Controle, em Registros e no CSV.
-- Ao enviar, a data, a hora e o nome do garçom são gravados pelo servidor. O turno enviado pode ser corrigido no mesmo dia. O garçom não vê histórico.
+- **Uma contagem por turno, feita em equipe.** Quem começa a contar salva o andamento no servidor; os outros garçons veem "Bruno está fazendo esta contagem · 12 de 29" com os grupos já contados e, se ele precisar parar, tocam em **Continuar daqui** e seguem de onde parou (só quem está com a contagem edita). Depois de enviada, o turno fica fechado para os outros garçons.
+- Ao enviar, a data, a hora e os nomes de quem participou são gravados pelo servidor. O garçom não vê histórico.
+- **Correção só com aprovação e só no mesmo dia.** Quem participou pode pedir correção no dia; os números novos só valem quando a gestão aprovar. A gestão vê o pedido no Controle e em Registros → Contagem do salão (o que muda, enviado → correção) e aprova ou recusa; o garçom vê o resultado. No dia seguinte não dá mais para pedir.
+- **Contar de verdade.** O passo a passo e a tela lembram de contar olhando, sem print, sem copiar a contagem anterior e sem fazer conta de cabeça. Antes de enviar, o garçom confirma "Contei agora, olhando cada item". Se 80% ou mais dos números forem iguais aos da outra contagem do dia, o app avisa antes do envio, e a gestão vê o alerta de números iguais aos da contagem anterior.
 - A gestão vê em **Registros → Contagem do salão** o calendário do mês (dias com as duas contagens, só uma ou nenhuma), filtro por turno, a tabela do dia com cada contagem e a **variação** em relação à contagem anterior (a do dia comparada com a noite anterior; a da noite, com o dia): ▼ vermelho quando diminuiu, ▲ verde quando aumentou. No topo aparecem as maiores quedas e reposições, e há o filtro “Só itens que mudaram”, e pode exportar o mês em CSV para o Excel. O Controle mostra a contagem de hoje dos dois turnos.
 - Os itens contados são editados pela gestão em Setores → Garçom e ficam salvos na programação (`countItems`). Enquanto ninguém editar, vale a lista padrão da planilha do salão (`DEFAULT_COUNT_ITEMS`, no `index.html`).
 
@@ -95,7 +98,7 @@ Enquanto o script não for executado, o app segue normalmente e apenas não faz 
 
 ### Equipe geral: garçons, cadastro pelo site e contagem
 
-Execute `supabase/equipe.sql` no SQL Editor (uma vez; pode ser repetido; não apaga dados). Ele libera o perfil de garçom, o cadastro com aprovação e a tabela de contagens. Sem o script, a contagem mostra que falta atualizar o banco e o cadastro pelo site avisa que ainda não está ativo. Mantenha **Confirm email** desligado: o cadastro pelo site depende disso.
+Execute `supabase/equipe.sql` no SQL Editor (uma vez; pode ser repetido; não apaga dados). Ele libera o perfil de garçom, o cadastro com aprovação, a tabela de contagens, a contagem em equipe (`count_progress`) e a aprovação de correções. Sem o script, a contagem mostra que falta atualizar o banco e o cadastro pelo site avisa que ainda não está ativo. Mantenha **Confirm email** desligado: o cadastro pelo site depende disso.
 
 ### Testes
 
