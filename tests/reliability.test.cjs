@@ -47,3 +47,4 @@ test('todas as telas do gestor, da ASG e do garçom abrem sem erro',()=>{const f
  f.run(`view.query='balc'`);assert.match(f.run('gRooms()'),/Balcão/);
  f.run(`db.users[0].role='asg'`);for(const fn of ['home','history','profile'])assert.ok(f.run(`${fn}()`).length>50,fn);
  f.run(`db.users[0].role='garcom'`);for(const fn of ['wHome','profile'])assert.ok(f.run(`${fn}()`).length>50,fn)});
+test('menu lateral do computador não aparece na barra do celular',()=>{const css=html.match(/\.bottom-nav \.nav-brand,\.bottom-nav \.nav-user\{display:none\}/);assert.ok(css,'regra base')});

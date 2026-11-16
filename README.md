@@ -12,6 +12,10 @@ Aplicativo estático em HTML e JavaScript de gestão geral da GAV: rotinas de li
 
 Para incluir outro perfil no futuro, acrescente-o na regra `profiles_role_check` de `supabase/equipe.sql` e crie as telas correspondentes.
 
+## Computador e celular
+
+No celular, o app usa a barra de navegação embaixo. No computador (telas a partir de 1040 px), vira um painel completo: menu lateral com a marca e o usuário, conteúdo largo com cartões em grade, Controle com Salão e Limpeza lado a lado, contagem com o calendário ao lado da tabela, contagem do garçom em duas colunas e entrada com a tela dividida entre a marca e o formulário. O app fica sempre no tema claro.
+
 ## Cadastro pelo site
 
 Na tela de entrada, **Quero me cadastrar** abre o formulário: nome, e-mail, senha e função (ASG ou garçom). O cadastro fica **aguardando aprovação**, sem acesso a nada. Em **Usuários**, a gestão aprova como ASG ou como garçom, ou recusa. O Controle avisa quando há cadastros pendentes. Quem tenta entrar antes da aprovação vê a mensagem de que o cadastro aguarda a gestão.
