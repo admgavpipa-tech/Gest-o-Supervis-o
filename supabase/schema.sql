@@ -434,7 +434,7 @@ drop function if exists public.gav_save_count(text, jsonb);
 -- p_notes: observação opcional do garçom (até 500 caracteres).
 create or replace function public.gav_save_count(p_shift text, p_items jsonb, p_notes text default null)
 returns jsonb language plpgsql security definer set search_path = public as $$
-declare actor uuid := auth.uid(); d date := gav_today(); who_name text; who_role text; it jsonb; q numeric; clean jsonb := '[]'; k text; saved public.counts;
+declare actor uuid := auth.uid(); d date := gav_today(); who_name text; who_role text; it jsonb; q numeric; clean jsonb := '[]'; k text; saved public.counts; expected jsonb;
 begin
   select name, role into who_name, who_role from profiles where id = actor and active and not archived;
   if not found or who_role not in ('garcom','gestor') then raise exception 'Somente garçons registram a contagem.' using errcode = '42501'; end if;
@@ -448,6 +448,12 @@ begin
     if q < 0 or q > 1000000 or q <> trunc(q) then raise exception 'Quantidade inválida em %.', it->>'name'; end if;
     clean := clean || jsonb_build_array(jsonb_build_object('name', trim(it->>'name'), 'qty', q::bigint));
   end loop;
+  -- Nenhum item da lista da gestão pode ficar sem contagem.
+  select a.data->'countItems' into expected from app_state a where a.id = 1;
+  if jsonb_typeof(expected) = 'array' and exists(select 1 from jsonb_array_elements_text(expected) n
+     where not exists(select 1 from jsonb_array_elements(clean) c where c->>'name' = trim(n))) then
+    raise exception 'Contagem incompleta: conte todos os itens da lista antes de enviar.';
+  end if;
   k := d::text || ':' || p_shift;
   insert into counts(key, date, shift, waiter_id, waiter_name, items, notes) values (k, d, p_shift, actor, who_name, clean, nullif(trim(p_notes), ''))
     on conflict (key) do update set items = excluded.items, notes = excluded.notes, waiter_id = excluded.waiter_id, waiter_name = excluded.waiter_name, updated_at = now()
