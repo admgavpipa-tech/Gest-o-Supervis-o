@@ -1,0 +1,53 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {PGlite}=require('@electric-sql/pglite');
+const root=path.join(__dirname,'..');
+test('banco: perfil de garçom e contagem de estoque',async t=>{
+ const db=new PGlite();
+ try{
+ await db.exec(`create role anon;create role authenticated;create schema auth;create schema storage;create schema extensions;
+ create table auth.users(id uuid primary key,email text,encrypted_password text,updated_at timestamptz,email_confirmed_at timestamptz);
+ create table auth.identities(user_id uuid,provider text,identity_data jsonb);
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
+ grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;
+ create table storage.buckets(id text primary key,name text,public boolean);
+ create table storage.objects(id uuid default gen_random_uuid(),bucket_id text,name text,created_at timestamptz default now());
+ alter table storage.objects enable row level security;
+ grant usage on schema storage to authenticated,anon;grant select,insert,update,delete on storage.objects to authenticated,anon;
+ create publication supabase_realtime;`);
+ // Instalação existente (schema antigo + atualização) e o script novo, repetido.
+ for(const f of ['schema.sql','reliability.sql','equipe.sql','equipe.sql'])await db.exec(fs.readFileSync(path.join(root,'supabase',f),'utf8'));
+ const manager='11111111-1111-4111-8111-111111111111',asg='22222222-2222-4222-8222-222222222222',w1='44444444-4444-4444-8444-444444444444',w2='55555555-5555-4555-8555-555555555555';
+ const people=[[manager,'Gestora','gestor'],[asg,'Ana ASG','asg'],[w1,'BRUNO NASCIMENTO','garcom'],[w2,'Outro Garçom','garcom']];
+ for(const [id,name] of people)await db.query('insert into auth.users(id,email) values($1,$2)',[id,id+'@example.test']);
+ const actor=async id=>{await db.query(`select set_config('request.jwt.claim.sub',$1,false)`,[id]);await db.exec('set role authenticated')};
+ const owner=()=>db.exec('reset role');
+ const save=async(shift,items)=>(await db.query('select gav_save_count($1,$2::jsonb) as r',[shift,JSON.stringify(items)])).rows[0].r;
+ const items=[{name:'AGUA 500ML',qty:206},{name:'COCA ZERO',qty:48},{name:'PIRES',qty:0}];
+ await t.test('gestão cadastra perfil de garçom',async()=>{await owner();await db.query('insert into profiles(id,name,email,role) values($1,$2,$3,$4)',[manager,'Gestora','m@x','gestor']);await actor(manager);
+  for(const [id,name,role] of people.slice(1))await db.query('insert into profiles(id,name,email,role) values($1,$2,$3,$4)',[id,name,id+'@x',role]);
+  await owner();await assert.rejects(()=>db.query(`insert into profiles(id,name,email,role) values(gen_random_uuid(),'X','x@x','cozinha')`),/check constraint/)});
+ await t.test('garçom salva a contagem do turno com autoria e data do servidor',async()=>{await actor(w1);const r=await save('DIA',items);assert.equal(r.waiter_name,'BRUNO NASCIMENTO');assert.equal(r.shift,'DIA');assert.deepEqual(r.items,items);
+  const day=(await db.query('select gav_today()::text as d')).rows[0].d;assert.equal(r.key,`${day}:DIA`)});
+ await t.test('salvar de novo no mesmo turno atualiza, sem duplicar',async()=>{await actor(w1);await save('DIA',[{name:'AGUA 500ML',qty:200}]);await save('NOITE',items);await owner();
+  assert.equal((await db.query('select count(*)::int n from counts')).rows[0].n,2);assert.equal((await db.query(`select items from counts where shift='DIA'`)).rows[0].items[0].qty,200)});
+ await t.test('recusa quantidade negativa, fracionada ou texto e turno inválido',async()=>{await actor(w1);
+  for(const bad of [[{name:'X',qty:-1}],[{name:'X',qty:1.5}],[{name:'X',qty:'3'}],[],[{name:'',qty:1}]])await assert.rejects(()=>save('DIA',bad),/inválid/);
+  await assert.rejects(()=>save('TARDE',items),/Turno inválido/)});
+ await t.test('ASG não registra contagem e ninguém grava direto na tabela',async()=>{await actor(asg);await assert.rejects(()=>save('DIA',items),/Somente garçons/);
+  await actor(w1);await assert.rejects(()=>db.query(`insert into counts(key,date,shift,waiter_id,waiter_name,items) values('x',current_date,'DIA',$1,'x','[]')`,[w1]),/permission denied/)});
+ await t.test('duas contagens por dia: outro garçom corrige o turno, sem duplicar',async()=>{await actor(w2);const r=await save('NOITE',[{name:'PIRES',qty:3}]);assert.equal(r.waiter_name,'Outro Garçom');await owner();assert.equal((await db.query('select count(*)::int n from counts')).rows[0].n,2)});
+ await t.test('garçom vê só as contagens de hoje; ASG nenhuma; gestão todo o histórico',async()=>{await owner();await db.query(`insert into counts(key,date,shift,waiter_id,waiter_name,items) values('antiga',gav_today()-1,'DIA',$1,'BRUNO','[]')`,[w1]);
+  await actor(w1);assert.equal((await db.query('select count(*)::int n from counts')).rows[0].n,2);await actor(asg);assert.equal((await db.query('select count(*)::int n from counts')).rows[0].n,0);
+  await actor(manager);assert.equal((await db.query('select count(*)::int n from counts')).rows[0].n,3)});
+ await t.test('autocadastro fica pendente, sem acesso, até a gestão aprovar',async()=>{const nova='66666666-6666-4666-8666-666666666666';await owner();await db.query(`insert into auth.users(id,email) values($1,'Nova@Example.test')`,[nova]);
+  await actor(nova);await assert.rejects(()=>db.query(`select gav_request_access('Nova Pessoa','gestor')`),/Função inválida/);await db.query(`select gav_request_access('Nova Pessoa','garcom')`);
+  await assert.rejects(()=>db.query(`select gav_request_access('Nova Pessoa','asg')`),/já existe/);
+  const p=(await db.query('select role,active,pending,email from profiles where id=$1',[nova])).rows[0];assert.deepEqual(p,{role:'garcom',active:false,pending:true,email:'nova@example.test'});
+  await assert.rejects(()=>save('DIA',items),/Somente garçons/);assert.equal((await db.query('select count(*)::int n from counts')).rows[0].n,0);
+  await actor(manager);await db.query('update profiles set role=$2,active=true,pending=false where id=$1',[nova,'asg']);
+  await actor(nova);await assert.rejects(()=>save('DIA',items),/Somente garçons/);
+  await actor(manager);await db.query('update profiles set role=$2 where id=$1',[nova,'garcom']);await actor(nova);await save('DIA',items)});
+ await t.test('sem login não pede acesso',async()=>{await owner();await db.query(`select set_config('request.jwt.claim.sub','',false)`);await db.exec('set role authenticated');await assert.rejects(()=>db.query(`select gav_request_access('Alguém','asg')`),/Entre com/)});
+ await t.test('garçom inativo não registra',async()=>{await actor(manager);await db.query('update profiles set active=false where id=$1',[w2]);await actor(w2);await assert.rejects(()=>save('DIA',items),/Somente garçons/)});
+ }finally{await db.close()}
+});

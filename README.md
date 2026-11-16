@@ -1,6 +1,26 @@
 # GAV - Gestão de rotinas de limpeza
 
-Aplicativo estático em HTML e JavaScript para a gestão atribuir tarefas de limpeza às ASGs e acompanhar a execução, com identidade visual do template GAV. Publique `index.html` e `reliability.js` juntos.
+Aplicativo estático em HTML e JavaScript de gestão geral da GAV: rotinas de limpeza das ASGs e contagem de estoque do salão pelos garçons, com identidade visual do template GAV. Publique `index.html` e `reliability.js` juntos.
+
+## Perfis
+
+- **Gestor**: menu com Controle, Limpeza (Listas e Cômodos), Registros (Limpeza e Contagem do salão) e Usuários.
+- **ASG**: rotina de limpeza (sem mudanças).
+- **Garçom**: contagem de estoque do turno.
+
+Para incluir outro perfil no futuro, acrescente-o na regra `profiles_role_check` de `supabase/equipe.sql` e crie as telas correspondentes.
+
+## Cadastro pelo site
+
+Na tela de entrada, **Quero me cadastrar** abre o formulário: nome, e-mail, senha e função (ASG ou garçom). O cadastro fica **aguardando aprovação**, sem acesso a nada. Em **Usuários**, a gestão aprova como ASG ou como garçom, ou recusa. O Controle avisa quando há cadastros pendentes. Quem tenta entrar antes da aprovação vê a mensagem de que o cadastro aguarda a gestão.
+
+## Contagem de estoque (garçons)
+
+- São **duas contagens por dia**: uma no turno do dia e outra no da noite.
+- O garçom entra direto na tela **Contagem**. O turno já vem escolhido pelo horário e pelo que falta enviar. Ele digita a quantidade de cada item (teclado numérico; o "próximo" do teclado pula para o item seguinte), vê o progresso e o botão "Faltam N itens" leva ao primeiro em branco. O que foi digitado fica guardado no aparelho até o envio.
+- Ao enviar, a data, a hora e o nome do garçom são gravados pelo servidor. O turno enviado pode ser corrigido no mesmo dia. O garçom não vê histórico.
+- A gestão vê em **Registros → Contagem do salão** o calendário do mês (dias com as duas contagens, só uma ou nenhuma), filtro por turno, a tabela do dia com Dia, Noite e a diferença (noite − dia), e pode exportar o mês em CSV para o Excel. O Controle mostra a contagem de hoje dos dois turnos.
+- Os itens da contagem ficam em `COUNT_ITEMS`, no `index.html`, na ordem da planilha do salão.
 
 ## Como funciona
 
@@ -59,6 +79,10 @@ Execute `supabase/photo-retention.sql` no SQL Editor (uma vez; pode ser repetido
 
 Enquanto o script não for executado, o app segue normalmente e apenas não faz a limpeza. Se nenhum gestor abrir o app por alguns dias, a limpeza acontece no próximo acesso.
 
+### Equipe geral: garçons, cadastro pelo site e contagem
+
+Execute `supabase/equipe.sql` no SQL Editor (uma vez; pode ser repetido; não apaga dados). Ele libera o perfil de garçom, o cadastro com aprovação e a tabela de contagens. Sem o script, a contagem mostra que falta atualizar o banco e o cadastro pelo site avisa que ainda não está ativo. Mantenha **Confirm email** desligado: o cadastro pelo site depende disso.
+
 ### Testes
 
 Com Node.js e as dependências de desenvolvimento instaladas, execute `npm test`. Os testes do banco usam PostgreSQL local via PGlite, sem tocar nos dados reais. Cobrem autorização entre ASGs, impedimento de fechamento pendente, gravação atômica, foto obrigatória, privacidade do armazenamento, histórico, conflitos de versão, recuperação de atraso e repetição da atualização.
@@ -91,5 +115,6 @@ Referência: [Criar um site do GitHub Pages](https://docs.github.com/en/pages/ge
 - `supabase/schema.sql`: tabelas, regras de acesso, funções da gestão e armazenamento das fotos no Supabase.
 - `supabase/reliability.sql`: atualização transacional para instalações existentes.
 - `supabase/photo-retention.sql`: exclusão das fotos com mais de 30 dias.
+- `supabase/equipe.sql`: perfil de garçom, cadastro pelo site com aprovação e contagem de estoque.
 - `tests/`: testes isolados de regressão e do banco.
 - `README.md`: funcionamento, escopo e publicação.
