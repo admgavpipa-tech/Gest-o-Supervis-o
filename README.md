@@ -4,7 +4,9 @@ Aplicativo estático em HTML e JavaScript de gestão geral da GAV: rotinas de li
 
 ## Perfis
 
-- **Gestor**: menu com Controle, Limpeza (Listas e Cômodos), Registros (Limpeza e Contagem do salão) e Usuários.
+- **Gestor**: menu com Controle, Setores, Registros e Usuários. Setores e Registros têm duas visões, **Limpeza** e **Garçom**, trocadas no topo da tela; o app lembra a última visão escolhida. O Controle mostra os dois lados com o mesmo peso: Salão (contagens do dia e maiores quedas) e Limpeza (andamento, justificativas e listas).
+  - Setores → Limpeza: Listas e Cômodos. Setores → Garçom: status da contagem de hoje e a lista de itens contados, que a gestão edita (incluir, renomear, remover e reordenar).
+  - Registros → Limpeza: fotos, justificativas e pendências. Registros → Garçom: contagens do salão.
 - **ASG**: rotina de limpeza (sem mudanças).
 - **Garçom**: contagem de estoque do turno.
 
@@ -20,7 +22,7 @@ Na tela de entrada, **Quero me cadastrar** abre o formulário: nome, e-mail, sen
 - O garçom entra direto na tela **Contagem**. O turno já vem escolhido pelo horário e pelo que falta enviar. Ele digita a quantidade de cada item (teclado numérico; o "próximo" do teclado pula para o item seguinte), vê o progresso e o botão "Faltam N itens" leva ao primeiro em branco. O que foi digitado fica guardado no aparelho até o envio.
 - Ao enviar, a data, a hora e o nome do garçom são gravados pelo servidor. O turno enviado pode ser corrigido no mesmo dia. O garçom não vê histórico.
 - A gestão vê em **Registros → Contagem do salão** o calendário do mês (dias com as duas contagens, só uma ou nenhuma), filtro por turno, a tabela do dia com cada contagem e a **variação** em relação à contagem anterior (a do dia comparada com a noite anterior; a da noite, com o dia): ▼ vermelho quando diminuiu, ▲ verde quando aumentou. No topo aparecem as maiores quedas e reposições, e há o filtro “Só itens que mudaram”, e pode exportar o mês em CSV para o Excel. O Controle mostra a contagem de hoje dos dois turnos.
-- Os itens da contagem ficam em `COUNT_ITEMS`, no `index.html`, na ordem da planilha do salão.
+- Os itens contados são editados pela gestão em Setores → Garçom e ficam salvos na programação (`countItems`). Enquanto ninguém editar, vale a lista padrão da planilha do salão (`DEFAULT_COUNT_ITEMS`, no `index.html`).
 
 ## Como funciona
 
