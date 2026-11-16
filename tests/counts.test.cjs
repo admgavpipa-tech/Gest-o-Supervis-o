@@ -22,6 +22,7 @@ test('banco: perfil de garçom e contagem de estoque',async t=>{
  const actor=async id=>{await db.query(`select set_config('request.jwt.claim.sub',$1,false)`,[id]);await db.exec('set role authenticated')};
  const owner=()=>db.exec('reset role');
  const save=async(shift,items)=>(await db.query('select gav_save_count($1,$2::jsonb) as r',[shift,JSON.stringify(items)])).rows[0].r;
+ const saveNote=async(shift,items,notes)=>(await db.query('select gav_save_count($1,$2::jsonb,$3) as r',[shift,JSON.stringify(items),notes])).rows[0].r;
  const items=[{name:'AGUA 500ML',qty:206},{name:'COCA ZERO',qty:48},{name:'PIRES',qty:0}];
  await t.test('gestão cadastra perfil de garçom',async()=>{await owner();await db.query('insert into profiles(id,name,email,role) values($1,$2,$3,$4)',[manager,'Gestora','m@x','gestor']);await actor(manager);
   for(const [id,name,role] of people.slice(1))await db.query('insert into profiles(id,name,email,role) values($1,$2,$3,$4)',[id,name,id+'@x',role]);
@@ -48,6 +49,7 @@ test('banco: perfil de garçom e contagem de estoque',async t=>{
   await actor(nova);await assert.rejects(()=>save('DIA',items),/Somente garçons/);
   await actor(manager);await db.query('update profiles set role=$2 where id=$1',[nova,'garcom']);await actor(nova);await save('DIA',items)});
  await t.test('sem login não pede acesso',async()=>{await owner();await db.query(`select set_config('request.jwt.claim.sub','',false)`);await db.exec('set role authenticated');await assert.rejects(()=>db.query(`select gav_request_access('Alguém','asg')`),/Entre com/)});
+ await t.test('observação opcional é guardada, aparada e limitada',async()=>{await actor(w1);let r=await saveNote('DIA',items,'  Faltou entrega de água  ');assert.equal(r.notes,'Faltou entrega de água');r=await saveNote('DIA',items,'   ');assert.equal(r.notes,null);await assert.rejects(()=>saveNote('DIA',items,'x'.repeat(501)),/muito longa/)});
  await t.test('garçom inativo não registra',async()=>{await actor(manager);await db.query('update profiles set active=false where id=$1',[w2]);await actor(w2);await assert.rejects(()=>save('DIA',items),/Somente garçons/)});
  }finally{await db.close()}
 });
