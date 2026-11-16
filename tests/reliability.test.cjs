@@ -42,3 +42,8 @@ test('cadastro pendente fica fora da equipe e aparece para aprovação',()=>{con
 test('tela de cadastro oferece ASG e garçom, sem gestor',()=>{const f=fixture();const html=f.run('signupPage()');assert.match(html,/value="asg"/);assert.match(html,/value="garcom"/);assert.doesNotMatch(html,/value="gestor"/)});
 test('gestão edita os itens da contagem e os garçons passam a ver a nova lista',()=>{const f=fixture();f.run(`db.users[0].role='gestor'`);assert.equal(f.run('countItems().length'),29);assert.match(f.run('gSalon()'),/Itens contados/);
  f.run(`db.countItems=['GELO','PIRES']`);assert.match(f.run('snapshot().cfg'),/"countItems":\["GELO","PIRES"\]/);f.run(`db.users[0].role='garcom'`);const html=f.run('wHome()');assert.equal((html.match(/data-item=/g)||[]).length,2);assert.match(html,/GELO/)});
+test('todas as telas do gestor, da ASG e do garçom abrem sem erro',()=>{const f=fixture();f.run(`db.users[0].role='gestor';db.tasks.push({id:'t2',roomId:'r',title:'Balcão',instructions:'',materials:'',repeat:{type:'daily',every:1}})`);
+ for(const fn of ['gHome','gLists','gRooms','gRecords','gCounts','gSalon','gAsgs','profile'])assert.ok(f.run(`${fn}()`).length>100,fn);
+ f.run(`view.query='balc'`);assert.match(f.run('gRooms()'),/Balcão/);
+ f.run(`db.users[0].role='asg'`);for(const fn of ['home','history','profile'])assert.ok(f.run(`${fn}()`).length>50,fn);
+ f.run(`db.users[0].role='garcom'`);for(const fn of ['wHome','profile'])assert.ok(f.run(`${fn}()`).length>50,fn)});
