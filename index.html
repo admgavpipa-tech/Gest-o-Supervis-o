@@ -533,8 +533,8 @@ function wHome(){const u=me(),d=today(),shift=view.shift||defaultShift(),c=count
 async function sendCount(shift,vals,notes=''){const items=countItems().map(name=>({name,qty:vals[name]})),fix=!!countOf(today(),shift);const btn=document.querySelector('[data-action="confirm-action"]');if(btn){btn.disabled=true;btn.textContent='Enviando…'}
  clearTimeout(progressTimer);
  let {data,error}=await sb.rpc('gav_save_count',{p_shift:shift,p_items:items,p_notes:notes||null}),noteLost=false;
- // Banco ainda sem o campo de observação: envia a contagem sem ela.
- if(error&&notes&&/PGRST202|p_notes|function/i.test(`${error.message} ${error.code}`)){({data,error}=await sb.rpc('gav_save_count',{p_shift:shift,p_items:items}));noteLost=!error}
+ // Banco ainda na versão antiga (sem observação): envia a contagem no formato antigo para o garçom não ficar travado.
+ if(error&&/PGRST202|p_notes|function/i.test(`${error.message} ${error.code}`)){({data,error}=await sb.rpc('gav_save_count',{p_shift:shift,p_items:items}));noteLost=!error&&!!notes}
  if(error){closeModal();toast(/gav_save_count|PGRST202/i.test(`${error.message} ${error.code}`)?'Falta atualizar o banco. Avise a gestão.':'Não foi enviada: '+(/fetch|network/i.test(error.message)?'sem internet. Os números ficaram salvos neste celular.':error.message));if(/está com|já foi enviada/.test(error.message)){await loadCounts();render()}return}
  counts[data.key]=data;delete liveCounts[data.key];dropCountDraft(shift);view.editing=null;view.shift=shift;if(!fix)view.justSent=shift;closeModal();render();window.scrollTo({top:0,behavior:'smooth'});
  if(fix)toast('Correção enviada. Ela vale depois que a gestão aprovar.');else if(noteLost)toast('Contagem enviada, mas a observação não foi salva: falta atualizar o banco. Avise a gestão.')}
