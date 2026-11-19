@@ -36,7 +36,7 @@ textarea{min-height:76px;resize:vertical}
 .err{border-color:#c0392b!important}
 .msg{color:#c0392b;font-size:13px;margin-top:10px;min-height:18px}
 .opts{display:grid;gap:10px}
-.opt{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid var(--line);border-radius:6px;padding:14px;cursor:pointer;font-weight:500;transition:.2s}
+.opt{margin:0;text-transform:none;letter-spacing:0;display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid var(--line);border-radius:6px;padding:14px;cursor:pointer;font-weight:500;transition:.2s}
 .opt input{width:auto;margin:0;accent-color:var(--navy)}
 .opt.sel{border-color:var(--navy);background:#f3f0e1}
 .opt b{display:block;font-weight:600}
@@ -179,7 +179,7 @@ function show(i){
   back.style.display=i?'block':'none';
   next.textContent = i===4?'Enviar resposta':'Continuar';
   next.className = i===4?'gold':'next';
-  if(i===4){texto=monta();document.getElementById('rev').textContent=texto;}
+  if(i===4){texto=monta();document.getElementById('rev').textContent=texto.replace(/\*/g,'');}
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
