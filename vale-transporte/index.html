@@ -105,10 +105,18 @@ footer{text-align:center;font-size:12px;color:var(--muted);padding:0 20px 30px}
     </section>
 
     <section class="step" data-s="4">
-      <div class="st"><div class="num">4</div><h2>Transporte hoje</h2></div>
-      <label>Valor da passagem da sua região até o trabalho <small>(só ida)</small></label>
-      <div class="money"><span>R$</span><input name="valor" inputmode="decimal" placeholder="0,00" required></div>
-      <p class="hint">Se você não usa transporte pago, coloque 0.</p>
+      <div class="st"><div class="num">4</div><h2>Valor da passagem</h2></div>
+      <p class="hint" style="margin:0 0 4px">Informe o valor da <b>van</b> da sua região até o trabalho (só ida), mesmo que hoje você não use a van.</p>
+      <div class="opts" id="valores" style="margin-top:14px">
+        <label class="opt"><input type="radio" name="vsel" value="6"><span><b>R$ 6,00</b><small>Goianinha e região</small></span></label>
+        <label class="opt"><input type="radio" name="vsel" value="5"><span><b>R$ 5,00</b><small>Tibau do Sul e região</small></span></label>
+        <label class="opt"><input type="radio" name="vsel" value="3"><span><b>R$ 3,00</b><small>Pipa</small></span></label>
+        <label class="opt"><input type="radio" name="vsel" value="outro"><span><b>Outro valor</b><small>Digite abaixo</small></span></label>
+      </div>
+      <div id="outroValor" style="display:none">
+        <label>Qual o valor da van? <small>(só ida)</small></label>
+        <div class="money"><span>R$</span><input name="valor" inputmode="decimal" placeholder="0,00"></div>
+      </div>
     </section>
 
     <section class="step" data-s="5">
@@ -138,6 +146,11 @@ const f = document.getElementById('f'), steps=[...document.querySelectorAll('.st
 const next=document.getElementById('next'), back=document.getElementById('back'), msg=document.getElementById('msg');
 let cur=0, texto='';
 
+document.querySelectorAll('#valores input').forEach(r=>r.addEventListener('change',()=>{
+  document.querySelectorAll('.opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
+  document.getElementById('outroValor').style.display = f.vsel.value==='outro'?'block':'none';
+  msg.textContent='';
+}));
 document.querySelectorAll('#regioes input').forEach(r=>r.addEventListener('change',()=>{
   document.querySelectorAll('.opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
   document.getElementById('outraBox').style.display = f.regiao.value==='Outra'?'block':'none';
@@ -152,11 +165,16 @@ function valida(i){
   s.querySelectorAll('[required]').forEach(el=>{const bad=!el.value.trim();el.classList.toggle('err',bad);if(bad)ok=false;});
   if(i===1){ if(!f.regiao.value){msg.textContent='Escolha sua região.';return false;}
     if(f.regiao.value==='Outra'&&!f.outra.value.trim()){f.outra.classList.add('err');ok=false;} }
-  if(i===3 && f.valor.value.trim() && moeda(f.valor.value)===null){f.valor.classList.add('err');msg.textContent='Digite um valor válido, ex.: 5,00';return false;}
+  if(i===3){
+    if(!f.vsel.value){msg.textContent='Escolha o valor da passagem.';return false;}
+    if(f.vsel.value==='outro' && (!f.valor.value.trim() || moeda(f.valor.value)===null)){f.valor.classList.add('err');msg.textContent='Digite o valor, ex.: 4,50';return false;}
+  }
   if(!ok) msg.textContent='Preencha os campos destacados.';
   return ok;
 }
 
+function valorNum(){return f.vsel.value==='outro'?parseFloat((f.valor.value||'').replace(/[^\d,\.]/g,'').replace(',','.')):parseFloat(f.vsel.value);}
+const fmt=n=>n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 function monta(){
   const reg = f.regiao.value==='Outra' ? 'Outra – '+f.outra.value.trim() : f.regiao.value;
   const L=[
@@ -169,11 +187,12 @@ function monta(){
     '*Endereço:* '+f.rua.value.trim(),
     '*Referência:* '+f.ref.value.trim()
   ];
-  L.push('','*Valor da ida:* R$ '+moeda(f.valor.value),'*Ida e volta/dia:* R$ '+(moeda(f.valor.value)?(parseFloat(f.valor.value.replace(',','.').replace(/[^\d.]/g,''))*2).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):''));
+  L.push('','*Valor da van (ida):* R$ '+fmt(valorNum()),'*Ida e volta/dia:* R$ '+fmt(2*valorNum()));
   return L.join('\n');
 }
 
 function show(i){
+  if(i===3 && !f.vsel.value){const m={'Pipa':'3','Tibau do Sul e região':'5','Goianinha e região':'6'}[f.regiao.value];if(m){f.querySelector('input[name=vsel][value="'+m+'"]').checked=true;f.querySelector('input[name=vsel][value="'+m+'"]').dispatchEvent(new Event('change'));}}
   cur=i; steps.forEach((s,k)=>s.classList.toggle('on',k===i));
   bar.forEach((b,k)=>b.classList.toggle('on',k<=Math.min(i,3)));
   back.style.display=i?'block':'none';
@@ -193,7 +212,7 @@ let enviando=false;
 async function envia(){
   if(enviando) return; enviando=true; next.disabled=true; next.textContent='Enviando…'; msg.textContent='';
   const reg = f.regiao.value==='Outra' ? 'Outra – '+f.outra.value.trim() : f.regiao.value;
-  const valor = parseFloat((f.valor.value||'').replace(/[^\d,\.]/g,'').replace(',','.'));
+  const valor = valorNum();
   try{
     if(!sb) throw new Error('Sem conexão com a internet.');
     const {error} = await sb.rpc('gav_vt_responder',{p_nome:f.nome.value,p_setor:f.setor.value,p_regiao:reg,p_bairro:f.bairro.value,p_rua:f.rua.value,p_referencia:f.ref.value,p_valor:valor});
