@@ -236,3 +236,5 @@ fieldset.plain{border:0;padding:0;margin:0;min-width:0}
 .step-pill.muted-pill{background:#eef1f5;color:var(--muted)}
 .self-task{width:auto;margin:-4px 0 14px}
 @media(max-width:560px){.order-sum{grid-template-columns:1fr 1fr}.note-sum-row{gap:8px}}
+.step-pill.warn-pill{background:var(--amber-bg);color:var(--amber)}
+.note-sum-row .ns-bad .dash-bar i{background:var(--red)}.note-sum-row .ns-warn .dash-bar i{background:#e0a526}
