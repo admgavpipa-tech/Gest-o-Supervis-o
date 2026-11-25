@@ -238,3 +238,11 @@ fieldset.plain{border:0;padding:0;margin:0;min-width:0}
 @media(max-width:560px){.order-sum{grid-template-columns:1fr 1fr}.note-sum-row{gap:8px}}
 .step-pill.warn-pill{background:var(--amber-bg);color:var(--amber)}
 .note-sum-row .ns-bad .dash-bar i{background:var(--red)}.note-sum-row .ns-warn .dash-bar i{background:#e0a526}
+
+/* Celular da gestão: barra de baixo por área e abas da área no topo. */
+.manager-nav button{font-size:11px}
+.area-nav{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:-4px -16px 16px;padding:2px 16px 4px;-webkit-overflow-scrolling:touch}
+.area-nav::-webkit-scrollbar{display:none}
+.area-nav button{flex:none;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:99px;padding:9px 15px;font:inherit;font-size:13.5px;font-weight:600;white-space:nowrap;cursor:pointer}
+.area-nav button.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.sector-tabs{display:none!important}

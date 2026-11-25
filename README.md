@@ -14,7 +14,7 @@ Para incluir outro perfil no futuro, acrescente-o na regra `profiles_role_check`
 
 ## Computador e celular
 
-No celular, o app usa a barra de navegação embaixo. No computador (telas a partir de 1040 px), vira um painel completo: menu lateral por área (Limpeza, Salão, Pessoas) com a marca e o usuário, barra do topo com o caminho da tela, a data e os avisos, conteúdo largo com cartões em grade, Controle com Salão e Limpeza lado a lado, contagem com o calendário ao lado da tabela, contagem do garçom em duas colunas e entrada com a tela dividida entre a marca e o formulário. O app fica sempre no tema claro, com as fontes Fraunces (títulos) e Figtree (texto).
+No celular, o app usa a barra de navegação embaixo. Para a gestão, ela é organizada por área — **Início · Limpeza · Salão · Adm. · Pessoas** — e cada área tem suas telas em abas no topo (Limpeza: Registros, Listas, Cômodos; Salão: Contagens, Itens da contagem; Adm.: Visão geral, Cronograma, Contratos, Chamados, Notas, Pedidos, Caixas). No computador (telas a partir de 1040 px), vira um painel completo: menu lateral por área (Limpeza, Salão, Pessoas) com a marca e o usuário, barra do topo com o caminho da tela, a data e os avisos, conteúdo largo com cartões em grade, Controle com Salão e Limpeza lado a lado, contagem com o calendário ao lado da tabela, contagem do garçom em duas colunas e entrada com a tela dividida entre a marca e o formulário. O app fica sempre no tema claro, com as fontes Fraunces (títulos) e Figtree (texto).
 
 ## Primeiro acesso
 
