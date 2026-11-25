@@ -325,3 +325,19 @@ button.of-step{cursor:pointer}button.of-step:hover{border-color:#b9c4d8}
 .area-line.lv-sum{flex-wrap:wrap;align-items:center}
 .dialog .field-grid{min-width:0}.dialog .field-grid>*{min-width:0}.dialog input[type=date],.dialog input[type=month]{min-width:0;width:100%;max-width:100%}
 .role-pick.three{grid-template-columns:repeat(3,1fr)}@media(max-width:480px){.role-pick.three{grid-template-columns:1fr}}.info-text{color:var(--navy)}
+/* Caixa: filtro por equipe e menu "Mais" nos pagamentos. */
+button.team-card{font:inherit;text-align:left;cursor:pointer;color:inherit}
+.team-card.on{border-color:var(--navy);box-shadow:0 0 0 3px #0b306b14}
+.team-filter{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 0 6px;padding-bottom:2px}
+.team-filter::-webkit-scrollbar{display:none}
+.team-filter button{flex:none;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:99px;padding:7px 13px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.team-filter button.on{background:var(--navy);border-color:var(--navy);color:#fff}
+.section-title .text-btn{display:inline-flex;align-items:center;gap:5px}.section-title .text-btn svg{width:15px;height:15px}
+.pay-row .assign-actions{flex-wrap:nowrap;align-items:center}
+details.more{position:relative;margin-left:auto}
+details.more summary{list-style:none;cursor:pointer;font-size:13px;font-weight:700;color:var(--navy);padding:4px 10px;border:1px solid var(--line);border-radius:99px;background:#fff}
+details.more summary::-webkit-details-marker{display:none}
+details.more[open] summary{background:#f0f3f7}
+.more-menu{position:absolute;right:0;bottom:calc(100% + 6px);z-index:5;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px #0b306b22;padding:6px;display:flex;flex-direction:column;min-width:190px}
+.more-menu .text-btn{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;text-decoration:none;white-space:nowrap}
+.more-menu .text-btn:hover{background:#f4f6fa}.more-menu svg{width:15px;height:15px}
