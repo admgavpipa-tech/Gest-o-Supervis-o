@@ -246,3 +246,57 @@ fieldset.plain{border:0;padding:0;margin:0;min-width:0}
 .area-nav button{flex:none;border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:99px;padding:9px 15px;font:inherit;font-size:13.5px;font-weight:600;white-space:nowrap;cursor:pointer}
 .area-nav button.active{background:var(--navy);border-color:var(--navy);color:#fff}
 .sector-tabs{display:none!important}
+
+/* Cadastro pelo site */
+.signup .su-form h1,.signup .su-done h1{font-size:32px;margin:4px 0 6px}
+.su-lead{color:var(--muted);font-size:14px;margin:0 0 18px;line-height:1.5}
+.su-steps{display:flex;gap:6px;list-style:none;padding:0;margin:0 0 22px;counter-reset:s}
+.su-steps li{flex:1;display:flex;flex-direction:column;gap:6px;font-size:11.5px;font-weight:600;color:var(--muted);position:relative}
+.su-steps li::after{content:'';position:absolute;top:13px;left:32px;right:4px;height:2px;background:#e3e7ec;border-radius:2px}
+.su-steps li:last-child::after{display:none}
+.su-steps li span{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#fff;border:1.5px solid #d5dbe3;font-size:12.5px;color:var(--muted);position:relative;z-index:1}
+.su-steps li span svg{width:15px;height:15px}
+.su-steps li.now{color:var(--navy)}.su-steps li.now span{border-color:var(--navy);background:var(--navy);color:#fff}
+.su-steps li.done{color:var(--green)}.su-steps li.done span{border-color:var(--green);background:var(--green);color:#fff}.su-steps li.done::after{background:var(--green)}
+.su-group{border:0;padding:0;margin:0 0 18px;min-width:0}
+.su-group legend{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:18px;color:var(--navy);padding:0;margin-bottom:10px}
+.su-field{position:relative;display:block;margin-bottom:10px}
+.su-field>svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:#8a97a8;pointer-events:none;transition:color .2s}
+.su-field input{width:100%;height:56px;border:1.5px solid #dde2e8;border-radius:14px;background:#fff;padding:20px 44px 6px 44px;font:inherit;font-size:15px;color:var(--ink);transition:border-color .2s,box-shadow .2s;outline:none}
+.su-field>span{position:absolute;left:44px;top:50%;transform:translateY(-50%);font-size:14px;color:#8a97a8;pointer-events:none;transition:all .18s ease}
+.su-field input:focus{border-color:var(--navy);box-shadow:0 0 0 4px #0b306b14}
+.su-field input:focus+span,.su-field input:not(:placeholder-shown)+span{top:16px;font-size:11px;font-weight:600;color:var(--bronze)}
+.su-field input:focus~svg,.su-field:focus-within>svg{color:var(--navy)}
+.pw-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;background:none;border-radius:10px;color:#8a97a8;display:grid;place-items:center;cursor:pointer}
+.pw-eye svg{width:18px;height:18px}.pw-eye.on{color:var(--navy);background:#0b306b0d}
+.su-match{font-size:12.5px;margin:-2px 2px 0;min-height:16px;color:var(--muted)}.su-match.ok{color:var(--green)}.su-match.bad{color:var(--red)}
+.su-area{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin:12px 0 8px}
+.su-roles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.su-role{position:relative;cursor:pointer}
+.su-role input{position:absolute;opacity:0;pointer-events:none}
+.su-role-card{display:flex;flex-direction:column;gap:8px;height:100%;background:#fff;border:1.5px solid #dde2e8;border-radius:16px;padding:14px;position:relative;transition:border-color .2s,box-shadow .2s,transform .15s}
+.su-role:hover .su-role-card{border-color:#b9c4d8}
+.su-role-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#f2ede4;color:var(--bronze);transition:all .2s}
+.su-role-ic svg{width:20px;height:20px}
+.su-role-txt strong{display:block;font-size:14px;color:var(--ink);line-height:1.25}
+.su-role-txt small{display:block;font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35}
+.su-role-ok{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:#fff;opacity:0;transform:scale(.6);transition:all .2s}
+.su-role-ok svg{width:13px;height:13px}
+.su-role input:checked+.su-role-card{border-color:var(--navy);box-shadow:0 0 0 4px #0b306b14}
+.su-role input:checked+.su-role-card .su-role-ic{background:var(--navy);color:#fff}
+.su-role input:checked+.su-role-card .su-role-ok{opacity:1;transform:scale(1)}
+.su-role input:focus-visible+.su-role-card{outline:2px solid var(--navy);outline-offset:2px}
+.su-submit{display:flex;align-items:center;justify-content:center;gap:8px;height:54px;font-size:15px}
+.su-submit svg{width:18px;height:18px}
+.su-foot{text-align:center;font-size:13.5px;color:var(--muted);margin:16px 0 0}.su-foot .text-btn{font-weight:700}
+.su-done{text-align:left}
+.su-check{width:76px;height:76px;margin:0 0 18px}
+.su-check svg{width:76px;height:76px;fill:none}
+.su-check circle{stroke:var(--green);stroke-width:2.5;fill:var(--green-bg);stroke-dasharray:151;stroke-dashoffset:151;animation:su-draw .6s ease forwards}
+.su-check path{stroke:var(--green);stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:40;stroke-dashoffset:40;animation:su-draw .35s .5s ease forwards}
+@keyframes su-draw{to{stroke-dashoffset:0}}
+.su-done .su-steps{margin-top:6px}
+.su-note{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:13px;color:var(--muted);margin:0 0 18px;line-height:1.45}
+.su-note svg{width:18px;height:18px;color:var(--navy);flex:none;margin-top:1px}
+@media(max-width:380px){.su-roles{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.su-check circle,.su-check path{animation:none;stroke-dashoffset:0}}

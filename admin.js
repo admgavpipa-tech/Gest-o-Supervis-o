@@ -280,6 +280,7 @@ async function seedCashes(){const id=()=>crypto.randomUUID();const a=await admSa
 
 /* ---------- Ações ---------- */
 async function admAction(a,b){const id=b.dataset.id,x=id&&admById(id);
+ if(a==='adm-pw-toggle'){const inp=b.closest('.pw-field')?.querySelector('input');if(inp){const show=inp.type==='password';inp.type=show?'text':'password';b.setAttribute('aria-label',show?'Esconder senha':'Mostrar senha');b.classList.toggle('on',show)}return}
  if(a==='adm-new-person'){closeModal();asgDialog(null,b.dataset.role);return}
  if(OFFICE_PAGES[a]){if(a==='o-contracts')markContractsSeen();if(a==='o-tickets')markTicketsSeen();navigate(a,a==='o-order'?{order:id}:{});return}
  if(a==='adm-go-red'){view.contractFilter='all';view.contractMonth=today().slice(0,7);markContractsSeen();navigate('o-contracts');return}
@@ -451,3 +452,6 @@ function contractDash(m){const cs=contractsOf(m),aud=cs.filter(c=>c.data.audit),
  ${people.length?`<div class="section-title"><h2>Por responsável pelo lançamento</h2></div><div class="table-wrap"><table class="count-table people-table"><thead><tr><th>Responsável</th><th>Contratos</th><th>Verdes</th><th>Amarelos</th><th>Vermelhos</th></tr></thead><tbody>${people.map(x=>`<tr><td>${esc(x.n)}</td><td>${x.total}</td><td>${x.ok}</td><td>${x.medio?`<b class="t-medio">${x.medio}</b>`:'0'}</td><td>${x.grave?`<b class="t-grave">${x.grave}</b>`:'0'}</td></tr>`).join('')}</tbody></table></div>`:''}
  ${recent.length?`<div class="section-title"><h2>Erros do mês</h2><small>${recent.length}</small></div><div class="adm-list">${recent.map(c=>{const l=contractLevel(c),its=AUDIT_CHECKS.filter(([kk])=>['medio','grave'].includes(c.data.checks?.[kk]?.level));return `<button class="contract-card lvl-${l}" data-action="adm-contract-open" data-id="${c.id}"><span class="grow"><strong>${esc(c.data.cliente)}</strong><small>${its.map(([kk,lb])=>`${lb}: ${esc(c.data.checks[kk].note||'')}`).join(' · ')}</small><small>Lançado por ${esc(c.data.lancamento?.name||'—')} · auditado por ${esc(c.data.audit.by)} em ${dateBR(c.data.audit.date)}</small></span>${icon('chevron','chevron')}</button>`}).join('')}</div>`:''}
  <div class="section-title"><h2>Todos os contratos do mês</h2></div></section>`}
+// Cadastro: confere as senhas enquanto a pessoa digita.
+document.addEventListener('input',e=>{const f=e.target.closest?.('#signup-form');if(!f||!['password','password2'].includes(e.target.name))return;const a=f.querySelector('[name=password]').value,b=f.querySelector('[name=password2]').value,el=document.getElementById('su-match');if(!el)return;
+ el.className='su-match'+(b?a===b&&a.length>=6?' ok':' bad':'');el.textContent=!b?'':a.length<6?'A senha precisa ter pelo menos 6 caracteres.':a===b?'As senhas conferem.':'As senhas ainda não conferem.'});
