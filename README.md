@@ -49,13 +49,13 @@ Cada perfil vê só a própria parte; a gestão vê e configura tudo (Setores �
 - **Chamados** (assistente): número, data de abertura e descrição do chamado aberto em outro sistema; marcar como feito; **Copiar** copia os chamados em aberto no modelo da sala (“descrição” e, embaixo, “(Chamado aberto #número aberto dia dd/mm/aaaa)”).
 - **Notas fiscais** (analista): cadastro de parceiros e de alimentação PJ; por mês, uma linha por parceiro com nota recebida, baixa nos vouchers (ou “parceiro não entregou voucher este mês”), lançamento no Zeev e pagamento (previsto ou efetivado). Cada nota tem histórico de quem fez cada coisa e quando, e a lista “A cobrar” (com botão de copiar) mostra o que falta de nota e de voucher no mês.
 - **Pedidos** (analista): o registro é curto — fornecedor (obrigatório), mês, data de chegada, se a nota fiscal veio junto e a conferência (não conforme exige a descrição). Depois, na tela do pedido, cada etapa é registrada com um toque: nota fiscal (se não veio junto), lançado no Zeev e pagamento programado no Zeev. O andamento vai em comentários, cada um com usuário e hora; o comentário final pode fechar o pedido como resolvido. Alterações de datas também ficam registradas.
-- **Caixas** (analista; configurados pela gestão): a gestão cria cada caixa com uma ou mais equipes e o valor mensal de cada uma. Saldo do mês total e por equipe, lançamento de pagamentos (lançado ou pago), comprovante anexado (recibo assinado ou nota), exportação do mês e **recibo de pagamento** no modelo da sala, um por pagamento, pronto para imprimir e assinar.
+- **Caixas** (analista; configurados pela gestão): a gestão cria cada caixa com uma ou mais equipes e o valor mensal de cada uma. Saldo do mês total e por equipe, lançamento de pagamentos (pendente de lançamento, lançado ou pago, com cancelamento em vez de exclusão), exportação do mês e **recibo de pagamento** no modelo da sala, um por pagamento, pronto para imprimir e assinar.
 - **Painel de contratos** (gestão): números do mês por cor, gráfico dos últimos 6 meses, onde estão os erros (por item), por responsável pelo lançamento e a lista dos erros do mês. É só para acompanhar; o aviso de “erros novos” some depois que a gestão abre o painel.
 - **Funções por pessoa**: o padrão é analista com notas, pedidos e caixas, e assistente de contratos com contratos e chamados. Em Usuários → Administrativo, a gestão marca outras funções para cada pessoa (coluna `adm_modules`). O cronograma é de todos, mas cada um vê só as próprias tarefas (também no banco) e pode criar tarefas para si.
 - **Histórico**: notas, pedidos, pagamentos, contratos e chamados guardam quem lançou e cada alteração (botão Histórico). Pagamento não é apagado: é cancelado e continua no histórico.
 - **Parceiros**: entram na lista a partir de um mês e podem sair a partir de outro; os meses anteriores continuam com as notas registradas. “Sem nota este mês” tira o parceiro dos pendentes; voucher não entregue continua na cobrança. Há dois tipos de pendente: de receber e com problema na nota (com a descrição do problema); depois vem o lançado no Zeev. O pagamento é opcional e não entra no painel.
 - **Controle do gestor**: “Precisa de você” reúne as pendências de todas as áreas (cadastros, correções de contagem, contagem não enviada, limpeza atrasada, contratos vermelhos ou sem auditoria, pedidos com pendência, chamados novos (só o aviso; o resto é acompanhamento), tarefas atrasadas, saldo negativo), e abaixo vem um cartão por área.
-- Banco: rode `supabase/administrativo.sql` no SQL Editor (depois de `equipe.sql`). Ele cria a tabela `adm_items`, as permissões por perfil e o armazenamento privado `comprovantes` (fora da limpeza de 30 dias das fotos).
+- Banco: rode `supabase/administrativo.sql` no SQL Editor (depois de `equipe.sql`). Ele cria a tabela `adm_items`, as permissões por perfil.
 
 ## Como funciona
 
@@ -151,7 +151,7 @@ Referência: [Criar um site do GitHub Pages](https://docs.github.com/en/pages/ge
 - `supabase/reliability.sql`: atualização transacional para instalações existentes.
 - `supabase/photo-retention.sql`: exclusão das fotos com mais de 30 dias.
 - `supabase/equipe.sql`: perfil de garçom, cadastro pelo site com aprovação e contagem de estoque.
-- `supabase/administrativo.sql`: perfis do administrativo, cronograma, contratos, chamados, notas, pedidos, caixas e comprovantes.
+- `supabase/administrativo.sql`: perfis do administrativo, cronograma, contratos, chamados, notas, pedidos, caixas.
 - `admin.js` e `admin.css`: telas do administrativo e do controle do gestor.
 - `tests/`: testes isolados de regressão e do banco.
 - `README.md`: funcionamento, escopo e publicação.

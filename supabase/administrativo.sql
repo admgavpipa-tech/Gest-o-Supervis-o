@@ -121,14 +121,5 @@ create policy "adm: exclusão" on public.adm_items for delete to authenticated
   using ((public.gav_adm_can(kind, true) and (kind <> 'tarefa_feita' or created_by = auth.uid() or public.is_manager()))
     or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office()));
 
--- Comprovantes (recibos assinados e notas fiscais dos caixas). Ficam guardados; não entram na limpeza de 30 dias das fotos.
-insert into storage.buckets(id, name, public) values ('comprovantes', 'comprovantes', false) on conflict (id) do nothing;
-drop policy if exists "comprovantes: leitura" on storage.objects;
-create policy "comprovantes: leitura" on storage.objects for select to authenticated using (bucket_id = 'comprovantes' and public.gav_adm_can('pagamento', false));
-drop policy if exists "comprovantes: envio" on storage.objects;
-create policy "comprovantes: envio" on storage.objects for insert to authenticated with check (bucket_id = 'comprovantes' and public.gav_adm_can('pagamento', true));
-drop policy if exists "comprovantes: exclusão" on storage.objects;
-create policy "comprovantes: exclusão" on storage.objects for delete to authenticated using (bucket_id = 'comprovantes' and public.gav_adm_can('pagamento', true));
-
 do $$ begin alter publication supabase_realtime add table public.adm_items; exception when duplicate_object then null; end $$;
 commit;
