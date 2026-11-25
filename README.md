@@ -40,6 +40,19 @@ Na tela de entrada, **Quero me cadastrar** abre o formulário: nome, e-mail, sen
 - Em Setores → Garçom, a gestão vê os itens separados por tipo (Bebidas, Café e açúcar, Petiscos, Louças e taças, Descartáveis, Outros), escolhe o tipo ao incluir ou editar um item (`countGroups`) e muda a ordem arrastando pelo ⋮⋮ ou pelas setas, dentro do tipo. A ordem e o tipo valem para a tela dos garçons.
 - Os itens contados são editados pela gestão em Setores → Garçom e ficam salvos na programação (`countItems`). Enquanto ninguém editar, vale a lista padrão da planilha do salão (`DEFAULT_COUNT_ITEMS`, no `index.html`).
 
+## Administrativo (assistente de contratos e analista administrativo)
+
+Cada perfil vê só a própria parte; a gestão vê e configura tudo (Setores → Adm. no celular, grupo Administrativo no computador).
+
+- **Cronograma** (os dois perfis): a gestão cria a tarefa, define a repetição e escolhe quem faz. Quem recebe marca como feita (sem foto). Tarefas de dias anteriores não feitas aparecem em Atrasadas por 14 dias.
+- **Auditoria de contratos** (assistente): as mesmas colunas da planilha da sala (cliente, aprovador, data da venda, turno, cotas, responsável pelo lançamento, auditado, data e responsável pela auditoria, erro, boletos, documentação UAU, CRM e Flow). Quem lança não audita o próprio contrato. Cada item auditado recebe **verde** (certo), **amarelo** (erro mediano, talvez não venha) ou **vermelho** (erro que vai ou corre muito risco de ser pontuado); a cor do contrato é a do pior item. Filtro por cor, busca por cliente e exportação do mês no formato da planilha.
+- **Chamados** (assistente): número, data de abertura e descrição do chamado aberto em outro sistema; marcar como feito; **Copiar** copia os chamados em aberto no modelo da sala (“descrição” e, embaixo, “(Chamado aberto #número aberto dia dd/mm/aaaa)”).
+- **Notas fiscais** (analista): cadastro de parceiros e de alimentação PJ; por mês, uma linha por parceiro com nota recebida, baixa nos vouchers, lançamento no Zeev e pagamento (previsto ou efetivado), com quem registrou cada etapa.
+- **Pedidos** (analista): pedido mensal do setor de compras com a data em que chegaram o pedido e a nota, o lançamento no Zeev, a conferência (conforme ou não conforme, com o que faltou) e comentários até marcar como resolvido.
+- **Caixas** (analista; configurados pela gestão): cada caixa tem equipes com valor mensal (ex.: SPIF com 4 equipes de R$ 1.000 e Administrativo com R$ 1.500). Saldo do mês total e por equipe, lançamento de pagamentos (lançado ou pago), comprovante anexado (recibo assinado ou nota), exportação do mês e **recibo de pagamento** no modelo da sala, um por pagamento, pronto para imprimir e assinar.
+- **Controle do gestor**: “Precisa de você” reúne as pendências de todas as áreas (cadastros, correções de contagem, contagem não enviada, limpeza atrasada, contratos vermelhos ou sem auditoria, pedidos com pendência, chamados antigos, tarefas atrasadas, saldo negativo), e abaixo vem um cartão por área.
+- Banco: rode `supabase/administrativo.sql` no SQL Editor (depois de `equipe.sql`). Ele cria a tabela `adm_items`, as permissões por perfil e o armazenamento privado `comprovantes` (fora da limpeza de 30 dias das fotos).
+
 ## Como funciona
 
 Nada é atribuído direto a uma ASG: as tarefas entram em **listas**, e cada lista é liberada para uma ou mais ASGs. Ao entrar, a ASG escolhe qual lista vai assumir no dia.
@@ -134,5 +147,7 @@ Referência: [Criar um site do GitHub Pages](https://docs.github.com/en/pages/ge
 - `supabase/reliability.sql`: atualização transacional para instalações existentes.
 - `supabase/photo-retention.sql`: exclusão das fotos com mais de 30 dias.
 - `supabase/equipe.sql`: perfil de garçom, cadastro pelo site com aprovação e contagem de estoque.
+- `supabase/administrativo.sql`: perfis do administrativo, cronograma, contratos, chamados, notas, pedidos, caixas e comprovantes.
+- `admin.js` e `admin.css`: telas do administrativo e do controle do gestor.
 - `tests/`: testes isolados de regressão e do banco.
 - `README.md`: funcionamento, escopo e publicação.

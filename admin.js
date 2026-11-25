@@ -31,7 +31,9 @@ async function admRemove(id){const {error}=await sb.from('adm_items').delete().e
 
 /* ---------- Formatos ---------- */
 const brl=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-const dateBR=d=>d?String(d).slice(0,10).split('-').reverse().join('/'):'';
+// Dia no horário de Brasília (as datas de criação vêm do servidor em UTC).
+const spDay=iso=>iso?new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date(iso)):'';
+const dateBR=d=>{if(!d)return '';const s=String(d);return (s.length>10?spDay(s):s.slice(0,10)).split('-').reverse().join('/')};
 const monthLabel=m=>{const [y,mm]=m.split('-').map(Number);return new Date(y,mm-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase())};
 const shiftMonth=(m,n)=>{const [y,mm]=m.split('-').map(Number),d=new Date(y,mm-1+n,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`};
 function parseMoney(s){let t=String(s??'').trim().replace(/[R$\s]/g,'');if(!t)return NaN;if(t.includes(','))t=t.replace(/\./g,'').replace(',','.');const v=Number(t);return Number.isFinite(v)?Math.round(v*100)/100:NaN}
@@ -64,13 +66,14 @@ TOURS.analista=[['briefcase','Bem-vindo(a) à GAV!','Aqui fica o seu dia no admi
 TOURS.contratos=[['briefcase','Bem-vindo(a) à GAV!','Aqui fica o seu dia no administrativo.'],['tasks','Cronograma','Em Tarefas aparecem as tarefas do dia. Toque para marcar como feita.'],['ticket','Chamados','Registre o número e a data de cada chamado aberto e marque como feito quando finalizar. O botão Copiar copia a lista para enviar.']];
 
 /* ---------- Visão geral (gestão) ---------- */
-function oHub(){const d=today(),m=d.slice(0,7),tasks=tasksOn(d),done=tasks.filter(t=>doneOf(t.id,d)).length,late=lateTasks().length,open=admOf('chamado').filter(x=>x.data.status!=='feito').length,people=officePeople();
+function oHub(){const d=today(),m=d.slice(0,7),cs=admOf('contrato').filter(c=>String(c.data.dataVenda||'').slice(0,7)===m),tasks=tasksOn(d),done=tasks.filter(t=>doneOf(t.id,d)).length,late=lateTasks().length,open=admOf('chamado').filter(x=>x.data.status!=='feito').length,people=officePeople();
  const notes=t=>{const ps=partnersOf(t).filter(p=>p.data.active!==false),ns=ps.map(p=>noteOf(p.id,m));return [ns.filter(n=>n?.data.steps?.recebida?.date).length,ps.length]};const [pr,pt]=notes('parceiro'),[ar,at]=notes('alimentacao');
  const cash=admOf('caixa').filter(c=>c.data.active!==false).map(c=>{const s=cashSummary(c,m);return `<span class="dash-line">${icon('wallet')}<b>${esc(c.data.name)}</b>${brl(s.left)} de saldo</span>`}).join('');
  return sectorTabs('adm')+pageHead('Administrativo','Área administrativa','Cronograma, chamados, notas fiscais, pedidos e caixas do administrativo.')+admNotice()+`
  ${people.length?'':`<button class="tile pending-tile" data-action="g-asgs"><span class="tile-icon">${icon('users')}</span><span class="grow"><strong>Ninguém do administrativo cadastrado</strong><span class="muted">Cadastre assistentes de contratos e analistas em Usuários → Administrativo.</span></span>${icon('chevron','chevron')}</button>`}
  <div class="dash-grid adm-grid">
   <button class="dash-card" data-action="o-tasks"><span class="dash-top">${icon('tasks')}Cronograma</span><strong class="dash-big">${done}<small>/${tasks.length}</small></strong><span class="dash-sub">tarefas feitas hoje</span>${late?`<span class="dash-line warn">${icon('clock')}<b>${late}</b>${late===1?'atrasada':'atrasadas'}</span>`:''}</button>
+  <button class="dash-card" data-action="o-contracts"><span class="dash-top">${icon('file')}Contratos de ${monthLabel(m).split(' ')[0].toLowerCase()}</span><strong class="dash-big">${cs.filter(c=>c.data.audit).length}<small>/${cs.length}</small></strong><span class="dash-sub">auditados</span><span class="dash-line">${levelDot('grave')}<b>${cs.filter(c=>contractLevel(c)==='grave').length}</b>vermelhos</span><span class="dash-line">${levelDot('medio')}<b>${cs.filter(c=>contractLevel(c)==='medio').length}</b>amarelos</span></button>
   <button class="dash-card" data-action="o-tickets"><span class="dash-top">${icon('ticket')}Chamados</span><strong class="dash-big">${open}</strong><span class="dash-sub">${open===1?'chamado em aberto':'chamados em aberto'}</span></button>
   <button class="dash-card" data-action="o-notes"><span class="dash-top">${icon('receipt')}Notas de ${monthLabel(m).split(' ')[0].toLowerCase()}</span><strong class="dash-big">${pr+ar}<small>/${pt+at}</small></strong><span class="dash-sub">notas recebidas</span><span class="dash-line">${icon('users')}<b>Parceiros</b>${pr}/${pt}</span><span class="dash-line">${icon('cup')}<b>Alimentação PJ</b>${ar}/${at}</span></button>
   <button class="dash-card" data-action="o-orders"><span class="dash-top">${icon('truck')}Pedidos</span><strong class="dash-big">${openOrders().length}</strong><span class="dash-sub">com pendência em aberto</span></button>
@@ -79,12 +82,12 @@ function oHub(){const d=today(),m=d.slice(0,7),tasks=tasksOn(d),done=tasks.filte
 
 /* ---------- Cronograma ---------- */
 const taskActive=t=>t.data.active!==false;
-const taskStart=t=>{const s=t.data.start||today(),c=String(t.created_at||'').slice(0,10);return c&&c>s?c:s};
+const taskStart=t=>{const s=t.data.start||today(),c=spDay(t.created_at);return c&&c>s?c:s};
 const tasksOn=(d,who)=>admOf('tarefa').filter(t=>taskActive(t)&&occursOn({start:t.data.start||today(),end:t.data.end,repeat:t.data.repeat},d)&&d>=taskStart(t)&&(!who||(t.data.assignees||[]).includes(who))).sort((a,b)=>String(a.data.title).localeCompare(b.data.title,'pt-BR'));
 const doneOf=(task,d)=>admOf('tarefa_feita').find(x=>x.data.task===task&&x.data.date===d);
 function lateTasks(who){const out=[];for(let i=1;i<=14;i++){const d=addDays(today(),-i);for(const t of tasksOn(d,who))if(!doneOf(t.id,d))out.push({t,d})}return out}
 const assigneeNames=t=>(t.data.assignees||[]).map(id=>userById(id)).filter(Boolean).map(u=>shortName(u.name)).join(', ')||'Sem responsável';
-function taskRow(t,d,showWho){const f=doneOf(t.id,d),canUndo=f&&(isManager()||f.created_by===authId);return `<div class="adm-task${f?' done':''}"><button class="adm-check" data-action="adm-done" data-task="${t.id}" data-date="${d}" ${f&&!canUndo?'disabled':''} aria-pressed="${!!f}" aria-label="${f?'Desmarcar':'Marcar como feita'}: ${esc(t.data.title)}">${icon('check')}</button><div class="grow"><strong>${esc(t.data.title)}</strong>${t.data.notes?`<p>${esc(t.data.notes)}</p>`:''}<small>${f?`Feita por ${esc(shortName(f.created_by_name))} às ${timeOf(f.created_at)}${f.data.date!==String(f.created_at).slice(0,10)?` de ${dateBR(String(f.created_at).slice(0,10))}`:''}`:d<today()?`Era para ${dateBR(d)} · ${daysAgo(d)}`:esc(describeRepeat({start:t.data.start,end:t.data.end,repeat:t.data.repeat}))}${showWho?` · ${esc(assigneeNames(t))}`:''}</small></div></div>`}
+function taskRow(t,d,showWho){const f=doneOf(t.id,d),canUndo=f&&(isManager()||f.created_by===authId);return `<div class="adm-task${f?' done':''}"><button class="adm-check" data-action="adm-done" data-task="${t.id}" data-date="${d}" ${f&&!canUndo?'disabled':''} aria-pressed="${!!f}" aria-label="${f?'Desmarcar':'Marcar como feita'}: ${esc(t.data.title)}">${icon('check')}</button><div class="grow"><strong>${esc(t.data.title)}</strong>${t.data.notes?`<p>${esc(t.data.notes)}</p>`:''}<small>${f?`Feita por ${esc(shortName(f.created_by_name))} às ${timeOf(f.created_at)}${f.data.date!==spDay(f.created_at)?` de ${dateBR(f.created_at)}`:''}`:d<today()?`Era para ${dateBR(d)} · ${daysAgo(d)}`:esc(describeRepeat({start:t.data.start,end:t.data.end,repeat:t.data.repeat}))}${showWho?` · ${esc(assigneeNames(t))}`:''}</small></div></div>`}
 function oTasks(){if(isManager())return oTasksManager();const u=me(),d=today(),list=tasksOn(d,u.id),late=lateTasks(u.id),done=list.filter(t=>doneOf(t.id,d)).length,pc=list.length?Math.round(done/list.length*100):100;
  const next=[];for(let i=1;i<=6;i++){const dd=addDays(d,i);for(const t of tasksOn(dd,u.id))next.push({t,dd})}
  return `<p class="eyebrow">${esc(longDate(d))}</p><h1>${greet(u.name)}</h1><p class="subtitle">Seu cronograma de hoje. Toque na tarefa quando terminar.</p>${admNotice()}
@@ -167,7 +170,7 @@ function oOrder(){const o=admById(view.order);if(!o)return backLabel('Pedidos')+
  ${d.issues?`<p class="count-note${d.resolved?'':' warn'}">${icon('info')}${esc(d.issues)}</p>`:''}${stampLine(o)}</div>
  ${d.status==='nao_conforme'?`<button class="button ${d.resolved?'outline':''}" data-action="adm-order-resolve" data-id="${o.id}">${icon(d.resolved?'history':'check')}${d.resolved?'Reabrir pendência':'Marcar como resolvido'}</button>`:''}
  <div class="section-title"><h2>Comentários</h2><small>${c.length}</small></div>
- ${c.length?`<div class="thread">${c.map(x=>`<div class="thread-item"><span class="pick-avatar sm">${esc(initials(x.by||'?'))}</span><div><p><strong>${esc(shortName(x.by))}</strong><small>${dateBR(String(x.at).slice(0,10))} às ${timeOf(x.at)}</small></p><p>${esc(x.text)}</p></div></div>`).join('')}</div>`:'<p class="micro">Nenhum comentário ainda. Registre o andamento: o que foi cobrado, o que chegou depois, o que foi resolvido.</p>'}
+ ${c.length?`<div class="thread">${c.map(x=>`<div class="thread-item"><span class="pick-avatar sm">${esc(initials(x.by||'?'))}</span><div><p><strong>${esc(shortName(x.by))}</strong><small>${dateBR(x.at)} às ${timeOf(x.at)}</small></p><p>${esc(x.text)}</p></div></div>`).join('')}</div>`:'<p class="micro">Nenhum comentário ainda. Registre o andamento: o que foi cobrado, o que chegou depois, o que foi resolvido.</p>'}
  <form id="adm-form" data-kind="pedido-comentario" data-id="${o.id}" class="comment-form"><textarea name="text" rows="2" maxlength="1000" required placeholder="Escreva um comentário"></textarea><button class="button compact" type="submit">${icon('plus')}Comentar</button></form>`}
 
 /* ---------- Caixas ---------- */
@@ -229,6 +232,7 @@ async function seedCashes(){const id=()=>crypto.randomUUID();const a=await admSa
 async function admAction(a,b){const id=b.dataset.id,x=id&&admById(id);
  if(a==='adm-new-person'){closeModal();asgDialog(null,b.dataset.role);return}
  if(OFFICE_PAGES[a]){navigate(a,a==='o-order'?{order:id}:{});return}
+ if(a==='adm-go-red'){view.contractFilter='grave';view.contractMonth=today().slice(0,7);navigate('o-contracts');return}
  if(a==='adm-day'){view.admDay=addDays(view.admDay||today(),Number(b.dataset.step));render();return}
  if(a==='adm-done'){await toggleDone(b.dataset.task,b.dataset.date);return}
  if(a==='adm-task-new')return taskDialog();if(a==='adm-task-edit'&&x)return taskDialog(x);
