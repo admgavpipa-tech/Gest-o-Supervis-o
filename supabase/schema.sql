@@ -635,17 +635,46 @@ create table if not exists public.adm_items(
 );
 create index if not exists adm_items_kind_idx on public.adm_items(kind, created_at);
 
+-- Funções de cada pessoa do administrativo. Vazio (null) = padrão da função:
+-- analista: notas, pedidos e caixas; assistente de contratos: contratos e chamados. A gestão pode liberar outras.
+alter table public.profiles add column if not exists adm_modules text[];
+create or replace function public.gav_adm_modules() returns text[]
+language sql stable security definer set search_path = public as $$
+  select case when p.role = 'gestor' then array['contratos','chamados','notas','pedidos','caixas']
+    else coalesce(p.adm_modules, case p.role when 'analista' then array['notas','pedidos','caixas'] when 'contratos' then array['contratos','chamados'] else array[]::text[] end) end
+  from profiles p where p.id = auth.uid() and p.active and not p.archived and p.role in ('gestor','contratos','analista') $$;
+revoke all on function public.gav_adm_modules() from public, anon;
+grant execute on function public.gav_adm_modules() to authenticated;
+create or replace function public.gav_adm_office() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists(select 1 from profiles where id = auth.uid() and active and not archived and role in ('contratos','analista')) $$;
+revoke all on function public.gav_adm_office() from public, anon;
+grant execute on function public.gav_adm_office() to authenticated;
+
 -- Quem pode ver (p_write = false) e alterar (true) cada tipo. A gestão vê e altera tudo.
+-- Cronograma (tarefa e tarefa_feita) tem regra própria nas políticas: cada um só vê o seu.
 create or replace function public.gav_adm_can(p_kind text, p_write boolean) returns boolean
 language sql stable security definer set search_path = public as $$
-  select coalesce((select case p.role
-    when 'gestor' then true
-    when 'analista' then p_kind in ('tarefa_feita','parceiro','nota','pedido','pagamento') or (not p_write and p_kind in ('tarefa','caixa'))
-    when 'contratos' then p_kind in ('tarefa_feita','chamado','contrato') or (not p_write and p_kind = 'tarefa')
-    else false end
-  from profiles p where p.id = auth.uid() and p.active and not p.archived), false) $$;
+  select case when public.is_manager() then true when not public.gav_adm_office() then false else coalesce((select case p_kind
+    when 'tarefa' then not p_write
+    when 'tarefa_feita' then true
+    when 'chamado' then 'chamados' = any(m)
+    when 'contrato' then 'contratos' = any(m)
+    when 'parceiro' then 'notas' = any(m)
+    when 'nota' then 'notas' = any(m)
+    when 'pedido' then 'pedidos' = any(m)
+    when 'caixa' then not p_write and 'caixas' = any(m)
+    when 'pagamento' then 'caixas' = any(m)
+    else false end from (select public.gav_adm_modules() m) x), false) end $$;
 revoke all on function public.gav_adm_can(text, boolean) from public, anon;
 grant execute on function public.gav_adm_can(text, boolean) to authenticated;
+
+-- A tarefa é minha: fui escolhido para fazer ou eu mesmo criei.
+create or replace function public.gav_adm_task_mine(p_task text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists(select 1 from adm_items where id::text = p_task and kind = 'tarefa' and (data->'assignees' ? auth.uid()::text or created_by = auth.uid())) $$;
+revoke all on function public.gav_adm_task_mine(text) from public, anon;
+grant execute on function public.gav_adm_task_mine(text) to authenticated;
 
 -- Autoria e horário gravados pelo servidor.
 create or replace function public.gav_adm_stamp() returns trigger
@@ -668,16 +697,23 @@ alter table public.adm_items enable row level security;
 revoke all on public.adm_items from anon;
 grant select, insert, update, delete on public.adm_items to authenticated;
 drop policy if exists "adm: leitura" on public.adm_items;
-create policy "adm: leitura" on public.adm_items for select to authenticated using (public.gav_adm_can(kind, false));
+create policy "adm: leitura" on public.adm_items for select to authenticated using (
+  public.gav_adm_can(kind, false) and (public.is_manager() or kind not in ('tarefa','tarefa_feita')
+    or (kind = 'tarefa' and (data->'assignees' ? auth.uid()::text or created_by = auth.uid()))
+    or (kind = 'tarefa_feita' and (created_by = auth.uid() or public.gav_adm_task_mine(data->>'task')))));
 drop policy if exists "adm: inclusão" on public.adm_items;
-create policy "adm: inclusão" on public.adm_items for insert to authenticated with check (public.gav_adm_can(kind, true));
+create policy "adm: inclusão" on public.adm_items for insert to authenticated with check (
+  (public.gav_adm_can(kind, true) and (kind <> 'tarefa_feita' or public.is_manager() or public.gav_adm_task_mine(data->>'task')))
+  or (kind = 'tarefa' and public.gav_adm_office() and data->'assignees' = jsonb_build_array(auth.uid()::text)));
 drop policy if exists "adm: alteração" on public.adm_items;
 create policy "adm: alteração" on public.adm_items for update to authenticated
-  using (public.gav_adm_can(kind, true) and (kind <> 'tarefa_feita' or created_by = auth.uid() or public.is_manager()))
-  with check (public.gav_adm_can(kind, true));
+  using ((public.gav_adm_can(kind, true) and (kind <> 'tarefa_feita' or created_by = auth.uid() or public.is_manager()))
+    or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office()))
+  with check (public.gav_adm_can(kind, true) or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office() and data->'assignees' = jsonb_build_array(auth.uid()::text)));
 drop policy if exists "adm: exclusão" on public.adm_items;
 create policy "adm: exclusão" on public.adm_items for delete to authenticated
-  using (public.gav_adm_can(kind, true) and (kind <> 'tarefa_feita' or created_by = auth.uid() or public.is_manager()));
+  using ((public.gav_adm_can(kind, true) and (kind <> 'tarefa_feita' or created_by = auth.uid() or public.is_manager()))
+    or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office()));
 
 -- Comprovantes (recibos assinados e notas fiscais dos caixas). Ficam guardados; não entram na limpeza de 30 dias das fotos.
 insert into storage.buckets(id, name, public) values ('comprovantes', 'comprovantes', false) on conflict (id) do nothing;
