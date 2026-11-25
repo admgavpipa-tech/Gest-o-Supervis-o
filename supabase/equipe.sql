@@ -3,7 +3,7 @@
 begin;
 -- Perfis possíveis. Para incluir outro perfil no futuro, acrescente-o nesta lista.
 alter table public.profiles drop constraint if exists profiles_role_check;
-alter table public.profiles add constraint profiles_role_check check (role in ('gestor','asg','garcom'));
+alter table public.profiles add constraint profiles_role_check check (role in ('gestor','asg','garcom','contratos','analista'));
 
 -- Duas contagens por dia: uma no turno do dia e outra no da noite. Guarda quem enviou.
 -- Os itens ficam na ordem em que foram contados.
@@ -179,7 +179,7 @@ returns void language plpgsql security definer set search_path = public, auth as
 declare actor uuid := auth.uid(); mail text;
 begin
   if actor is null then raise exception 'Entre com o e-mail e a senha cadastrados.' using errcode = '42501'; end if;
-  if p_role is null or p_role not in ('asg','garcom') then raise exception 'Função inválida.'; end if;
+  if p_role is null or p_role not in ('asg','garcom','contratos','analista') then raise exception 'Função inválida.'; end if;
   if length(trim(coalesce(p_name, ''))) < 3 or length(p_name) > 80 then raise exception 'Informe o nome completo.'; end if;
   if exists(select 1 from profiles where id = actor) then raise exception 'Este cadastro já existe.'; end if;
   select email into mail from auth.users where id = actor;
