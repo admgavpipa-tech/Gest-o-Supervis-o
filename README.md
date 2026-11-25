@@ -136,9 +136,3 @@ Referência: [Criar um site do GitHub Pages](https://docs.github.com/en/pages/ge
 - `supabase/equipe.sql`: perfil de garçom, cadastro pelo site com aprovação e contagem de estoque.
 - `tests/`: testes isolados de regressão e do banco.
 - `README.md`: funcionamento, escopo e publicação.
-
-## Vale-transporte
-
-- `vale-transporte/index.html`: formulário aberto (sem login) para os colaboradores informarem região, endereço e valor da passagem. Cada envio é salvo pela função `gav_vt_responder`.
-- `vale-transporte/respostas.html`: só a gestão (mesmo login do app). Mostra totais por região, custo diário e mensal estimado, busca, exclusão e download da planilha (.csv).
-- Banco: rode `supabase/vale-transporte.sql` no SQL Editor do Supabase (depois de `schema.sql`).
