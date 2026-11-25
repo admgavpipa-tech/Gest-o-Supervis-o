@@ -300,3 +300,27 @@ fieldset.plain{border:0;padding:0;margin:0;min-width:0}
 .su-note svg{width:18px;height:18px;color:var(--navy);flex:none;margin-top:1px}
 @media(max-width:380px){.su-roles{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.su-check circle,.su-check path{animation:none;stroke-dashoffset:0}}
+.order-flow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}
+.of-step{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:left;font:inherit;color:var(--ink);position:relative;min-width:0}
+button.of-step{cursor:pointer}button.of-step:hover{border-color:#b9c4d8}
+.of-step>span{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;flex:none;background:#f0f3f7;color:var(--muted)}
+.of-step>span svg{width:16px;height:16px}
+.of-step.done>span{background:var(--green-bg);color:var(--green)}
+.of-step.todo{border-style:dashed;border-color:#c5cfdb}.of-step.todo b{color:var(--navy)}
+.of-step div{display:flex;flex-direction:column;min-width:0}.of-step small{font-size:11.5px;color:var(--muted);line-height:1.25}.of-step b{font-size:14px}
+.of-edit{width:14px!important;height:14px!important;color:var(--muted);margin-left:auto;flex:none}
+@media(max-width:700px){.order-flow{grid-template-columns:1fr 1fr}}
+.people-sum{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin:0 0 8px}
+.ps-card{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;text-align:left;font:inherit;color:var(--ink);cursor:pointer;position:relative;flex-wrap:wrap}
+.ps-card .grow{display:flex;flex-direction:column;min-width:0}.ps-card strong{font-size:14px}.ps-card small{font-size:11.5px;color:var(--muted)}
+.ps-nums{display:flex;flex-direction:column;align-items:flex-end}.ps-nums b{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:20px;color:var(--navy)}
+.ps-late{flex-basis:100%;font-size:12px;font-weight:700;color:var(--red);background:#fdeceb;border-radius:8px;padding:4px 8px;margin-top:2px}
+.ps-card.on{border-color:var(--navy);box-shadow:0 0 0 3px #0b306b14}.ps-card.late{border-color:#e8c3bf}
+/* Cartões de área: o do Administrativo ocupa a largura toda no celular; ícone e texto sempre na mesma linha. */
+.area-card.wide{grid-column:1/-1}
+@media(min-width:1040px){.area-card.wide{grid-column:auto}}
+.area-top{min-width:0}.area-top>svg{flex:none}.area-top .chevron{flex:none}
+.area-line{flex-wrap:nowrap;align-items:flex-start}.area-line>svg{margin-top:2px}
+.area-line>span:not(.lv-sum span){min-width:0}
+.area-line.lv-sum{flex-wrap:wrap;align-items:center}
+.dialog .field-grid{min-width:0}.dialog .field-grid>*{min-width:0}.dialog input[type=date],.dialog input[type=month]{min-width:0;width:100%;max-width:100%}
