@@ -725,13 +725,17 @@ drop policy if exists "adm: inclusão" on public.adm_items;
 create policy "adm: inclusão" on public.adm_items for insert to authenticated with check (
   (public.gav_adm_can(kind, true)
     and (kind <> 'tarefa_feita' or public.is_manager() or public.gav_adm_task_mine(data->>'task') or public.gav_adm_task_office(data->>'task'))
-    and (kind <> 'tarefa_transf' or public.is_manager() or public.gav_adm_task_office(data->>'task')))
+    and (kind <> 'tarefa_transf' or ((public.is_manager() or public.gav_adm_task_office(data->>'task'))
+      -- transferência para outra pessoa nasce pendente: só vale depois que quem recebe aceitar
+      and (data->>'status' = 'pendente' or data->>'to' = auth.uid()::text or public.is_manager()))))
   or (kind = 'tarefa' and public.gav_adm_office() and data->'assignees' = jsonb_build_array(auth.uid()::text)));
 drop policy if exists "adm: alteração" on public.adm_items;
 create policy "adm: alteração" on public.adm_items for update to authenticated
-  using ((public.gav_adm_can(kind, true) and (kind not in ('tarefa_feita','tarefa_transf') or created_by = auth.uid() or public.is_manager()))
+  using ((public.gav_adm_can(kind, true) and (kind not in ('tarefa_feita','tarefa_transf') or created_by = auth.uid() or public.is_manager()
+      or (kind = 'tarefa_transf' and data->>'to' = auth.uid()::text)))
     or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office()))
-  with check (public.gav_adm_can(kind, true) or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office() and data->'assignees' = jsonb_build_array(auth.uid()::text)));
+  -- quem recebe a transferência só responde (aceita ou recusa); não passa a tarefa para outra pessoa
+  with check ((public.gav_adm_can(kind, true) and (kind <> 'tarefa_transf' or created_by = auth.uid() or public.is_manager() or data->>'to' = auth.uid()::text)) or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office() and data->'assignees' = jsonb_build_array(auth.uid()::text)));
 drop policy if exists "adm: exclusão" on public.adm_items;
 create policy "adm: exclusão" on public.adm_items for delete to authenticated
   using ((public.gav_adm_can(kind, true) and (kind not in ('tarefa_feita','tarefa_transf') or created_by = auth.uid() or public.is_manager()) and (kind <> 'pagamento' or public.is_manager()))

@@ -169,3 +169,13 @@ test('transferência: a tarefa vai para a colega só naquele dia (pontual: até 
  const ids=x=>JSON.parse(f.run(`JSON.stringify(tasksOn(${x}).map(t=>t.id))`));
  assert.deepEqual(ids(`d,'eli'`),['t1','t2']);assert.deepEqual(ids(`d,'ana'`),[]);assert.deepEqual(ids(`am,'ana'`),['t1'],'amanhã volta para Ana');
  assert.match(f.run(`admTaskRow(admById('t1'),d,false,'eli')`),/Transferida de Ana/);assert.match(f.run(`admTaskRow(admById('t1'),d,false,'eli')`),/desfazer/)});
+test('transferência para outra pessoa só vale depois do aceite; novidades avisam quem recebe e quem enviou',()=>{const f=fixture();f.run(`var d=today();db.users[0].role='contratos';db.users[0].id='eli';db.users[0].name='Elisa';db.users.push({id:'ana',name:'Ana',role:'contratos',active:true});authId='eli';
+ adm=[{id:'t1',kind:'tarefa',data:{title:'CHECKLIST',assignees:['ana'],repeat:{type:'daily',every:1},start:d},created_at:d+'T09:00:00Z',created_by:'g'},{id:'t9',kind:'tarefa',data:{title:'NOVA PRA ELISA',mode:'pontual',assignees:['eli']},created_at:d+'T10:00:00Z',created_by:'g',created_by_name:'Carlos'},
+ {id:'x1',kind:'tarefa_transf',data:{task:'t1',title:'CHECKLIST',date:d,from:'ana',to:'eli',status:'pendente'},created_at:'1',created_by:'ana',created_by_name:'Ana'}]`);
+ const ids=w=>JSON.parse(f.run(`JSON.stringify(tasksOn(today(),'${w}').map(t=>t.id))`));
+ assert.deepEqual(ids('ana'),['t1'],'pendente: continua com Ana');assert.deepEqual(ids('eli'),['t9']);
+ assert.match(f.run('incomingHtml()'),/Para aceitar[\s\S]*CHECKLIST[\s\S]*Aceitar/);assert.match(f.run(`admTaskRow(admById('t1'),today(),false,'ana')`),/Aguardando Elisa aceitar/);
+ const news=JSON.parse(f.run('JSON.stringify(admNews().map(x=>x.key))'));assert.ok(news.includes('t:t9'));assert.ok(news.includes('x:x1:pendente'));
+ f.run(`adm[2].data.status='aceita';adm[2].data.answeredAt='x'`);assert.deepEqual(ids('eli').sort(),['t1','t9']);assert.deepEqual(ids('ana'),[]);
+ f.run(`authId='ana'`);assert.ok(JSON.parse(f.run('JSON.stringify(admNews().map(x=>x.key))')).includes('x:x1:aceita'),'Ana é avisada do aceite');
+ f.run(`adm[2].data.status='recusada'`);assert.deepEqual(ids('ana'),['t1'],'recusada: volta para Ana')});
