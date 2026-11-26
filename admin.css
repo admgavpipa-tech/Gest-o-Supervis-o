@@ -448,7 +448,15 @@ details.team-day{border:1px solid var(--line);border-radius:14px;background:#fff
 .inv-actions{display:flex;gap:16px;margin-top:8px;padding-left:4px}.inv-actions label{cursor:pointer}
 .order-flow{grid-template-columns:repeat(3,1fr)}.of-step{padding-right:30px}.of-edit{position:absolute;top:10px;right:10px}.of-step .of-sub{margin-top:2px;color:var(--green,#23704c);font-weight:600}
 @media(max-width:560px){.order-flow{grid-template-columns:1fr}.of-step{padding:12px 34px 12px 12px}.of-step div{flex-direction:row;flex-wrap:wrap;align-items:baseline;column-gap:8px}.of-step small{font-size:13px}.of-step .of-sub{flex-basis:100%}}
-.pay-doc{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0 2px}.pay-doc.busy{opacity:.55;pointer-events:none}.pay-doc .link-btn{cursor:pointer;font-size:13px}
-.doc-miss{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#a3361f}.doc-miss svg{width:15px;height:15px}
 .pay-row .assign-actions{flex-wrap:wrap;row-gap:8px;column-gap:16px}.pay-row .assign-actions .text-btn{white-space:nowrap}
 .radio-card small{font-weight:400}
+/* Anexo (nota ou recibo) */
+.att{display:flex;align-items:center;gap:12px;margin:10px 0 2px;padding:10px 12px;border-radius:12px;min-height:56px;-webkit-tap-highlight-color:transparent}.att.busy{opacity:.55;pointer-events:none}
+.att .grow{min-width:0;display:flex;flex-direction:column}.att strong{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.att small{font-size:12px;color:var(--muted,#6b7280)}
+.att-ic{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:#fff}.att-ic svg{width:18px;height:18px}
+.att.miss,.att.pick{border:1.5px dashed #d9a33a;background:#fffaf0;cursor:pointer}.att.miss .att-ic,.att.pick .att-ic{color:#a06d10;border:1px solid #f0d9b5}.att.miss strong,.att.pick strong{color:#7a5208}.att.miss:hover,.att.pick:hover{background:#fff4de}
+.att.ok{border:1.5px solid #9fcdb4;background:#f1f8f4}.att.ok .att-ic{color:#23704c;border:1px solid #cfe8da}.att.ok strong{color:#1f5f41}
+.att.pick{margin:0}
+.att-open{display:flex;align-items:center;gap:12px;flex:1;min-width:0;border:0;background:none;padding:0;font:inherit;text-align:left;cursor:pointer;color:inherit}
+.att-swap{flex:none;padding:6px 12px;border:1px solid #9fcdb4;border-radius:99px;background:#fff;color:#1f5f41;font-size:13px;font-weight:700;cursor:pointer}.att-swap:hover{background:#e6f3ec}
+.field .att span{margin:0;font-size:inherit;font-weight:400}.field .att .att-ic{display:grid}.field .att .grow{display:flex}.field .att strong{font-weight:700}.field .att small{font-weight:400}
