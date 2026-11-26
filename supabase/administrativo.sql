@@ -117,6 +117,50 @@ end $$;
 drop trigger if exists adm_items_stamp on public.adm_items;
 create trigger adm_items_stamp before insert or update on public.adm_items for each row execute function public.gav_adm_stamp();
 
+-- Tarefa criada por alguém do administrativo para colegas: cada colega fica em "pending" até aceitar.
+-- Ninguém (fora a gestão) coloca outra pessoa direto na tarefa nem marca a colega como aceita; as respostas vêm só de gav_adm_task_answer.
+create or replace function public.gav_adm_task_guard() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare uid text := auth.uid()::text; a text; olda jsonb := '[]'; oldp jsonb := '[]'; newa jsonb; newp jsonb;
+begin
+  if new.kind <> 'tarefa' or auth.uid() is null or public.is_manager() or current_setting('gav.answering', true) = 'on' then return new; end if;
+  newa := case when jsonb_typeof(new.data->'assignees') = 'array' then new.data->'assignees' else '[]'::jsonb end;
+  newp := case when jsonb_typeof(new.data->'pending') = 'array' then new.data->'pending' else '[]'::jsonb end;
+  if tg_op = 'UPDATE' then
+    olda := case when jsonb_typeof(old.data->'assignees') = 'array' then old.data->'assignees' else '[]'::jsonb end;
+    oldp := case when jsonb_typeof(old.data->'pending') = 'array' then old.data->'pending' else '[]'::jsonb end;
+  end if;
+  for a in select jsonb_array_elements_text(newa) loop
+    if a <> uid and not (olda ? a) and not (newp ? a) then raise exception 'A colega precisa aceitar a tarefa.' using errcode = '42501'; end if;
+    if a <> uid and (oldp ? a) and not (newp ? a) then raise exception 'Só a própria pessoa aceita a tarefa.' using errcode = '42501'; end if;
+  end loop;
+  if tg_op = 'UPDATE' then new.data := jsonb_set(new.data, '{answers}', coalesce(old.data->'answers', '[]'::jsonb));
+  else new.data := new.data - 'answers'; end if;
+  return new;
+end $$;
+drop trigger if exists adm_items_task_guard on public.adm_items;
+create trigger adm_items_task_guard before insert or update on public.adm_items for each row execute function public.gav_adm_task_guard();
+
+-- A própria pessoa aceita ou recusa a tarefa que uma colega criou para ela.
+create or replace function public.gav_adm_task_answer(p_task uuid, p_accept boolean) returns jsonb
+language plpgsql security definer set search_path = public as $$
+declare uid text := auth.uid()::text; d jsonb; who text;
+begin
+  select name into who from profiles where id = auth.uid() and active and not archived;
+  if who is null then raise exception 'Acesso não autorizado.' using errcode = '42501'; end if;
+  select data into d from adm_items where id = p_task and kind = 'tarefa' for update;
+  if d is null or jsonb_typeof(d->'pending') <> 'array' or not (d->'pending' ? uid) then raise exception 'Não há nada para responder nesta tarefa.'; end if;
+  d := jsonb_set(d, '{pending}', (select coalesce(jsonb_agg(x), '[]'::jsonb) from jsonb_array_elements_text(d->'pending') x where x <> uid));
+  if not p_accept then d := jsonb_set(d, '{assignees}', (select coalesce(jsonb_agg(x), '[]'::jsonb) from jsonb_array_elements_text(coalesce(d->'assignees', '[]'::jsonb)) x where x <> uid)); end if;
+  d := jsonb_set(d, '{answers}', coalesce(d->'answers', '[]'::jsonb) || jsonb_build_array(jsonb_build_object('id', uid, 'name', who, 'ok', p_accept, 'at', now())));
+  perform set_config('gav.answering', 'on', true);
+  update adm_items set data = d where id = p_task;
+  perform set_config('gav.answering', 'off', true);
+  return d;
+end $$;
+revoke all on function public.gav_adm_task_answer(uuid, boolean) from public, anon;
+grant execute on function public.gav_adm_task_answer(uuid, boolean) to authenticated;
+
 alter table public.adm_items enable row level security;
 revoke all on public.adm_items from anon;
 grant select, insert, update, delete on public.adm_items to authenticated;
@@ -132,14 +176,15 @@ create policy "adm: inclusão" on public.adm_items for insert to authenticated w
     and (kind <> 'tarefa_transf' or ((public.is_manager() or public.gav_adm_task_office(data->>'task'))
       -- transferência para outra pessoa nasce pendente: só vale depois que quem recebe aceitar
       and (data->>'status' = 'pendente' or data->>'to' = auth.uid()::text or public.is_manager()))))
-  or (kind = 'tarefa' and public.gav_adm_office() and data->'assignees' = jsonb_build_array(auth.uid()::text)));
+  -- o administrativo cria tarefa para si e para colegas (as colegas aceitam antes; ver gav_adm_task_guard)
+  or (kind = 'tarefa' and public.gav_adm_office()));
 drop policy if exists "adm: alteração" on public.adm_items;
 create policy "adm: alteração" on public.adm_items for update to authenticated
   using ((public.gav_adm_can(kind, true) and (kind not in ('tarefa_feita','tarefa_transf') or created_by = auth.uid() or public.is_manager()
       or (kind = 'tarefa_transf' and data->>'to' = auth.uid()::text)))
     or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office()))
   -- quem recebe a transferência só responde (aceita ou recusa); não passa a tarefa para outra pessoa
-  with check ((public.gav_adm_can(kind, true) and (kind <> 'tarefa_transf' or created_by = auth.uid() or public.is_manager() or data->>'to' = auth.uid()::text)) or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office() and data->'assignees' = jsonb_build_array(auth.uid()::text)));
+  with check ((public.gav_adm_can(kind, true) and (kind <> 'tarefa_transf' or created_by = auth.uid() or public.is_manager() or data->>'to' = auth.uid()::text)) or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office()));
 drop policy if exists "adm: exclusão" on public.adm_items;
 create policy "adm: exclusão" on public.adm_items for delete to authenticated
   using ((public.gav_adm_can(kind, true) and (kind not in ('tarefa_feita','tarefa_transf') or created_by = auth.uid() or public.is_manager()) and (kind <> 'pagamento' or public.is_manager()))

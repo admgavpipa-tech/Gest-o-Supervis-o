@@ -58,7 +58,7 @@ Cada perfil vê só a própria parte; a gestão vê e configura tudo (Setores �
 - Banco: rode `supabase/administrativo.sql` no SQL Editor (depois de `equipe.sql`). Ele cria a tabela `adm_items`, as permissões por perfil.
 
 ## Detalhes recentes
-- **Cronograma em equipe**: as assistentes veem as tarefas do dia umas das outras (Equipe hoje), podem concluir a tarefa da colega e transferir uma tarefa para outra pessoa só naquele dia (a pontual fica com quem recebeu até ser concluída). Não criam tarefa para outra pessoa. A transferência para outra pessoa só vale depois que ela tocar em Aceitar (até lá, a tarefa fica com quem estava); quem transferiu (ou a gestão) pode cancelar ou desfazer.
+- **Cronograma em equipe**: as assistentes veem as tarefas do dia umas das outras (Equipe hoje), podem concluir a tarefa da colega e transferir uma tarefa para outra pessoa só naquele dia (a pontual fica com quem recebeu até ser concluída). Podem criar tarefa para colegas: a tarefa só entra na lista de cada colega depois que ela aceitar (quem recusa sai da tarefa e quem criou é avisado). A transferência para outra pessoa só vale depois que ela tocar em Aceitar (até lá, a tarefa fica com quem estava); quem transferiu (ou a gestão) pode cancelar ou desfazer.
 - **Novidades em popup**: ao abrir o app (ou quando chega algo com ele aberto), aparece o aviso de tarefa nova, de transferência para aceitar e de transferência aceita ou recusada. Cada aviso aparece uma vez.
 
 - **Contagem**: os itens que zeraram na contagem mais recente aparecem para a gestão em “Precisa de você” e no topo de Salão → Contagens, com o botão “Copiar para compras”.
