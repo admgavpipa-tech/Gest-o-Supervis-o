@@ -201,7 +201,7 @@
 .group-chip.cheer{animation:cheer .5s cubic-bezier(.2,1.4,.4,1)}@keyframes cheer{40%{transform:scale(1.12)}}
 h1,h2{font-weight:500;letter-spacing:-.5px}.dash-big,.mini-stats b,.pick-count b,.count-head strong,.shift-sum-head strong{font-weight:500}
 </style>
-<link rel="stylesheet" href="admin.css">
+<link rel="stylesheet" href="admin.css?v=c5ac29de1c">
 </head><body>
 <div class="shell">
 <div id="app" class="phone" aria-live="polite"></div>
@@ -831,7 +831,7 @@ document.addEventListener('input',e=>{if(e.target.closest?.('#count-form')){onCo
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches?.('#count-form input')){e.preventDefault();const all=[...document.querySelectorAll('#count-form input')],next=all[all.indexOf(e.target)+1];if(next){next.focus();next.select?.()}else e.target.blur();return}if(e.key==='Escape')closeModal();if(e.key==='Tab'&&document.querySelector('.dialog')){const items=[...document.querySelectorAll('.dialog button:not(:disabled),.dialog input,.dialog select,.dialog textarea')];const first=items[0],last=items[items.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
 
 </script>
-<script src="reliability.js"></script>
-<script src="admin.js"></script>
+<script src="reliability.js?v=546dad82ff"></script>
+<script src="admin.js?v=494f422f6d"></script>
 <script>render();boot();</script>
 </body></html>

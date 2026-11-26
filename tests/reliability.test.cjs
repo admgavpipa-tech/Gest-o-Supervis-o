@@ -179,3 +179,5 @@ test('transferência para outra pessoa só vale depois do aceite; novidades avis
  f.run(`adm[2].data.status='aceita';adm[2].data.answeredAt='x'`);assert.deepEqual(ids('eli').sort(),['t1','t9']);assert.deepEqual(ids('ana'),[]);
  f.run(`authId='ana'`);assert.ok(JSON.parse(f.run('JSON.stringify(admNews().map(x=>x.key))')).includes('x:x1:aceita'),'Ana é avisada do aceite');
  f.run(`adm[2].data.status='recusada'`);assert.deepEqual(ids('ana'),['t1'],'recusada: volta para Ana')});
+test('index.html carrega a versão atual de admin.css, reliability.js e admin.js (sem cache velho)',()=>{const fs=require('fs'),path=require('path'),crypto=require('crypto'),root=path.join(__dirname,'..'),html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+ for(const f of ['admin.css','reliability.js','admin.js']){const v=crypto.createHash('sha1').update(fs.readFileSync(path.join(root,f))).digest('hex').slice(0,10);assert.ok(html.includes(`${f}?v=${v}`),`${f} desatualizado no index.html: rode npm run versao`)}});
