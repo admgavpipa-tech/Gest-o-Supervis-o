@@ -127,3 +127,7 @@ test('funções do administrativo não substituem as da limpeza (editar tarefa d
 test('admin.js não redefine funções de index.html ou reliability.js', () => {
  const names=src=>new Set([...src.matchAll(/^(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/gm)].map(m=>m[1]));
  const base=new Set([...names(main),...names(reliable)]),own=[...names(adminJs)].filter(n=>base.has(n));assert.deepEqual(own,[])});
+test('itens zerados na última contagem viram pendência de compra para a gestão',()=>{const f=fixture();f.run(`db.users[0].role='gestor';var d=today();counts[d+':DIA']={key:d+':DIA',date:d,shift:'DIA',waiter_name:'BRUNO',items:countItems().map((name,i)=>({name,qty:i<2?0:5}))}`);
+ const z=f.run('zeroItems().items.join()');assert.equal(z.split(',').length,2);assert.match(f.run('gHome()'),/2 itens zerados no estoque/);assert.match(f.run(`view.page='g-counts';gCounts()`),/Zerados no estoque/);assert.match(f.run('zeroText(zeroItems())'),/Itens zerados no estoque/)});
+test('cômodo: ícone escolhido pela gestão, ou automático pelo nome',()=>{const f=fixture();f.run(`db.users[0].role='gestor';openModal=x=>{globalThis.__m=x};roomDialog(db.rooms[0])`);const d=f.run('__m');assert.match(d,/name="icon" value="kids"/);assert.match(d,/value="Salão"/);
+ assert.equal(f.run(`localIcon('Salão')`),'bucket');f.run(`db.rooms[0].icon='kids'`);assert.equal(f.run(`localIcon('Salão')`),'kids')});
