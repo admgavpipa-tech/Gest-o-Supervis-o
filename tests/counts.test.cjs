@@ -63,7 +63,7 @@ test('banco: perfil de garçom e contagem de estoque',async t=>{
  await t.test('autocadastro fica pendente, sem acesso, até a gestão aprovar',async()=>{const nova='66666666-6666-4666-8666-666666666666';await owner();await db.query(`insert into auth.users(id,email) values($1,'Nova@Example.test')`,[nova]);
   await actor(nova);await assert.rejects(()=>db.query(`select gav_request_access('Nova Pessoa','gestor')`),/Função inválida/);await db.query(`select gav_request_access('Nova Pessoa','garcom')`);
   await assert.rejects(()=>db.query(`select gav_request_access('Nova Pessoa','asg')`),/já existe/);
-  const p=(await db.query('select role,active,pending,email from profiles where id=$1',[nova])).rows[0];assert.deepEqual(p,{role:'garcom',active:false,pending:true,email:'nova@example.test'});
+  const p={...(await db.query('select role,active,pending from profiles where id=$1',[nova])).rows[0],email:(await db.query('select email from gav_profile_emails()')).rows[0].email};assert.deepEqual(p,{role:'garcom',active:false,pending:true,email:'nova@example.test'});
   await assert.rejects(()=>save('DIA',items),/Somente garçons/);assert.equal((await db.query('select count(*)::int n from counts')).rows[0].n,0);
   await actor(manager);await db.query('update profiles set role=$2,active=true,pending=false where id=$1',[nova,'asg']);
   await actor(nova);await assert.rejects(()=>save('DIA',items),/Somente garçons/);

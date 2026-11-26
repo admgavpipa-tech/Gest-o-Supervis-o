@@ -72,7 +72,7 @@ test('administrativo: cada perfil vê só a própria parte e todas as telas abre
  html=f.run(`view.cash='cx';oCash()`);assert.match(html,/R\$\s?1\.749,50/);assert.match(html,/Captação A/);assert.match(f.run('oNotes()'),/Parceiro X/);assert.match(f.run('oOrders()'),/Com pendência/);f.run(`view.order='pe'`);assert.match(f.run('oOrder()'),/Faltou copo/);
  f.run(`db.users[0].role='gestor'`);for(const k of f.run('Object.keys(OFFICE_PAGES)'))assert.ok(f.run(`OFFICE_PAGES['${k}']()`).length>50,k);assert.match(f.run('oHub()'),/hub-list/);assert.match(f.run('sideNav()'),/Administrativo/);
  assert.equal(f.run('extenso(1250.5)'),'mil, duzentos e cinquenta reais e cinquenta centavos');assert.equal(f.run('extenso(1000)'),'mil reais');assert.equal(f.run('extenso(21.01)'),'vinte e um reais e um centavo');assert.equal(f.run(`parseMoney('1.250,50')`),1250.5);assert.equal(f.run(`parseMoney('300')`),300)});
-test('auditoria de contratos: cor do contrato é a do pior item e quem lançou não audita',()=>{const f=fixture();f.run(`db.users[0].role='contratos';var m=today().slice(0,7);adm=[
+test('auditoria de contratos: cor do contrato é a do pior item (quem lançou também pode auditar)',()=>{const f=fixture();f.run(`db.users[0].role='contratos';var m=today().slice(0,7);adm=[
  {id:'c1',kind:'contrato',data:{cliente:'CLIENTE UM',dataVenda:today(),turno:'DIURNO',cotas:2,lancamento:{name:'PESSOA',id:'u'}},created_at:'1'},
  {id:'c2',kind:'contrato',data:{cliente:'CLIENTE DOIS',dataVenda:today(),turno:'NOTURNO',cotas:1,lancamento:{name:'OUTRA'},audit:{date:today(),by:'PESSOA'},checks:{erro:{level:'ok'},boletos:{level:'na'},uau:{level:'medio',note:'Valor da parcela errado'},crm:{level:'ok'},flow:{level:'ok',value:'SIM'}}},created_at:'2'},
  {id:'c3',kind:'contrato',data:{cliente:'CLIENTE TRES',dataVenda:today(),turno:'NOTURNO',cotas:3,lancamento:{name:'OUTRA'},audit:{date:today(),by:'PESSOA'},checks:{erro:{level:'grave',note:'Cliente saiu sem assinar'},uau:{level:'medio',note:'x'}}},created_at:'3'}]`);
@@ -141,3 +141,7 @@ test('salvar junta comentários de quem editou ao mesmo tempo; títulos de janel
  const q={select(){return q},eq(){return q},update(o){saved=o.data;return q},maybeSingle:async()=>saved?{data:{...server,data:saved},error:null}:{data:server,error:null}};const sb={rpc:async()=>({data:{version:1,records:[]}}),from:()=>q};const f=fixture(sb);
  await f.run(`admSave('pedido',{comments:[{at:'2026-11-01T10:00:00Z',by:'Ana',text:'primeiro'},{at:'2026-11-01T10:06:00Z',by:'Ana',text:'da Ana'}]},'o')`);assert.equal(saved.comments.map(c=>c.text).join('|'),'primeiro|da Cris|da Ana');
  f.run(`openModal=x=>{globalThis.__m=x};confirmDialog('Excluir <img src=x onerror=alert(1)>?','b','ok',()=>{})`);assert.doesNotMatch(f.run('__m'),/<img/)});
+test('planilhas exportadas: texto digitado não vira fórmula no Excel',()=>{const f=fixture();
+ assert.equal(f.run(`csvCell('=HYPERLINK("http://x","clique")')`),`"'=HYPERLINK(""http://x"",""clique"")"`);
+ for(const v of ['+1+cmd','-2+3','@SUM(A1)'])assert.ok(f.run(`csvCell(${JSON.stringify(v)})`).startsWith(`"'`),v);
+ assert.equal(f.run(`csvCell('-10,50')`),'"-10,50"','número negativo continua número');assert.equal(f.run(`csvCell(12)`),'"12"');assert.equal(f.run(`csvCell(null)`),'""')});

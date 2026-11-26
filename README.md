@@ -45,7 +45,7 @@ Na tela de entrada, **Quero me cadastrar** abre o formulário: nome, e-mail, sen
 Cada perfil vê só a própria parte; a gestão vê e configura tudo (Setores → Adm. no celular, grupo Administrativo no computador).
 
 - **Cronograma** (os dois perfis; a gestão vê o de todos, com o resumo de cada pessoa — feitas, atrasadas — e filtro por pessoa; cada um vê só o seu, inclusive as próprias atrasadas): a gestão cria a tarefa com data (uma vez só ou repetindo, na frequência que quiser) ou **pontual** (fica na lista até alguém concluir, com prazo opcional) e escolhe quem faz. Quem recebe marca como feita (sem foto). Tarefas de dias anteriores não feitas aparecem em Atrasadas por 14 dias.
-- **Auditoria de contratos** (assistente): as mesmas colunas da planilha da sala (cliente, aprovador, data da venda, turno, cotas, responsável pelo lançamento, auditado, data e responsável pela auditoria, erro, boletos, documentação UAU, CRM e Flow). Quem lança não audita o próprio contrato. Cada item auditado recebe **verde** (certo), **amarelo** (erro mediano, talvez não venha) ou **vermelho** (erro que vai ou corre muito risco de ser pontuado); a cor do contrato é a do pior item. Filtro por cor, busca por cliente e exportação do mês no formato da planilha.
+- **Auditoria de contratos** (assistente): as mesmas colunas da planilha da sala (cliente, aprovador, data da venda, turno, cotas, responsável pelo lançamento, auditado, data e responsável pela auditoria, erro, boletos, documentação UAU, CRM e Flow). Cada item auditado recebe **verde** (certo), **amarelo** (erro mediano, talvez não venha) ou **vermelho** (erro que vai ou corre muito risco de ser pontuado); a cor do contrato é a do pior item. Filtro por cor, busca por cliente e exportação do mês no formato da planilha.
 - **Chamados** (assistente): número, data de abertura e descrição do chamado aberto em outro sistema; marcar como feito; **Copiar** copia os chamados em aberto no modelo da sala (“descrição” e, embaixo, “(Chamado aberto #número aberto dia dd/mm/aaaa)”).
 - **Notas fiscais** (analista): cadastro de parceiros e de alimentação PJ; por mês, uma linha por parceiro com nota recebida, baixa nos vouchers (ou “parceiro não entregou voucher este mês”), lançamento no Zeev e pagamento (previsto ou efetivado). Cada nota tem histórico de quem fez cada coisa e quando, e a lista “A cobrar” (com botão de copiar) mostra o que falta de nota e de voucher no mês.
 - **Pedidos** (analista): o registro é curto — fornecedor (obrigatório), mês, data de chegada, se a nota fiscal veio junto e a conferência (não conforme exige a descrição). Depois, na tela do pedido, cada etapa é registrada com um toque: nota fiscal (se não veio junto), lançado no Zeev e pagamento programado no Zeev. O andamento vai em comentários, cada um com usuário e hora; o comentário final pode fechar o pedido como resolvido. Alterações de datas também ficam registradas.
@@ -65,6 +65,16 @@ Cada perfil vê só a própria parte; a gestão vê e configura tudo (Setores �
 - **Cômodos**: ao criar ou editar, dá para escolher o ícone (ou deixar automático pelo nome).
 - **Contratos**: com turno (diurno ou noturno); responsável pelo lançamento e aprovador são escolhidos na lista do administrativo e da gestão. O painel da gestão separa diurno e noturno: contratos, cotas lançadas, auditados e erros por cor e por item.
 - **Gestores**: todo gestor tem o mesmo acesso e as mesmas telas, inclusive os cadastrados por outro gestor.
+
+## Privacidade e segurança
+- **E-mails**: só a gestão vê o e-mail de todos; cada pessoa vê apenas o próprio. Os demais veem só nome e função.
+- **Limpeza**: registros, fotos e histórico da programação só para a gestão e as ASGs. Garçons e administrativo não leem.
+- **Contagens**: o garçom vê só as contagens do dia; o histórico é da gestão.
+- **Administrativo**: cada pessoa vê só as áreas liberadas para ela; o cronograma, só as próprias tarefas. Autoria e horário são gravados pelo servidor.
+- **Sem login**, nenhuma tabela é lida. Toda gravação da limpeza e da contagem passa por funções do banco que conferem quem está gravando.
+- **Planilhas exportadas**: texto que começa com `=`, `+`, `-` ou `@` não vira fórmula no Excel.
+- Textos digitados aparecem sempre como texto (nunca como código) em telas, recibos e relatórios.
+- Recomendado no painel do Supabase (Authentication): senha mínima de 8 caracteres e proteção contra senhas vazadas.
 
 ## Como funciona
 

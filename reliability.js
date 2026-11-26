@@ -31,14 +31,17 @@ function restoreJournal(){if(journalOwner===authId)return;journalOwner=authId;co
  for(const table of ['records','picks','closed']){for(const row of change[table].up){db[table][row.key]=table==='records'?row.data:table==='picks'?{lists:row.lists,at:row.at}:{time:row.time}}for(const key of change[table].del)delete db[table][key]}
  pendingSave=hasChanges(changesBetween(snapshot(),synced));if(pendingSave)lastSaveError='Há alterações deste aparelho aguardando envio.';
 }
+// O e-mail não vem na lista de perfis: a gestão recebe o de todos, cada pessoa só o próprio.
+const PROFILE_COLS='id,name,role,active,archived,pending,created_at,adm_modules';
+async function profileEmails(){const r=await sb.rpc('gav_profile_emails');if(r.error){const old=await sb.from('profiles').select('id,email');if(old.error){console.warn('E-mails indisponíveis:',r.error.message);return {}}return Object.fromEntries((old.data||[]).map(x=>[x.id,x.email]))}return Object.fromEntries((r.data||[]).map(x=>[x.id,x.email]))}
 async function loadAll(force=false){
  const epoch=dataEpoch,loadedFor=authId;
  const [users,state,records,picks,closedRows,hist]=await Promise.all([
-  fetchAll('profiles','*',x=>x,'id'),sb.from('app_state').select('data,version').eq('id',1).maybeSingle(),
+  fetchAll('profiles',PROFILE_COLS,x=>x,'id'),sb.from('app_state').select('data,version').eq('id',1).maybeSingle(),
   fetchAll('records','key,data'),fetchAll('picks'),fetchAll('closed'),fetchAll('config_history','*',x=>x,'version')]);
  if(state.error)throw state.error;
  if(loadedFor!==authId||(!force&&(epoch!==dataEpoch||saving||pendingSave)))return false;
- db.users=users.map(u=>({...u,created:u.created_at}));
+ const mails=await profileEmails();db.users=users.map(u=>({...u,email:mails[u.id]||u.email||'',created:u.created_at}));
  if(!state.data&&isManager()){
   const seeded=await sb.rpc('gav_apply_changes',{expected_version:0,changes:{cfg:initialConfig()}});if(seeded.error)throw seeded.error;
   return loadAll();

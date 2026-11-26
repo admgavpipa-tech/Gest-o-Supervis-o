@@ -92,11 +92,6 @@ begin
     new.created_by := auth.uid(); new.created_by_name := who; new.created_at := now();
   else
     new.kind := old.kind; new.created_by := old.created_by; new.created_by_name := old.created_by_name; new.created_at := old.created_at;
-    -- Contrato: quem lançou não audita o próprio contrato (a gestão pode).
-    if new.kind = 'contrato' and (new.data->'audit') is distinct from (old.data->'audit') and new.data->'audit' is not null
-       and new.data->'lancamento'->>'id' = auth.uid()::text and not public.is_manager() then
-      raise exception 'Quem lançou não audita o próprio contrato.' using errcode = '42501';
-    end if;
   end if;
   new.updated_by := auth.uid(); new.updated_by_name := who; new.updated_at := now();
   return new;
@@ -127,4 +122,52 @@ create policy "adm: exclusão" on public.adm_items for delete to authenticated
     or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office()));
 
 do $$ begin alter publication supabase_realtime add table public.adm_items; exception when duplicate_object then null; end $$;
+-- Privacidade. O e-mail de cada pessoa só aparece para a gestão e para a própria pessoa;
+-- o resto da equipe vê apenas nome e função (para mostrar quem fez cada coisa).
+revoke select on public.profiles from authenticated, anon;
+grant select (id, name, role, active, archived, pending, created_at, adm_modules) on public.profiles to authenticated;
+create or replace function public.gav_profile_emails() returns table(id uuid, email text)
+language sql stable security definer set search_path = public as $$
+  select p.id, p.email from profiles p where public.is_manager() or p.id = auth.uid() $$;
+revoke all on function public.gav_profile_emails() from public, anon;
+grant execute on function public.gav_profile_emails() to authenticated;
+-- O aviso em tempo real de perfis não leva o e-mail.
+do $$ begin
+  begin alter publication supabase_realtime drop table public.profiles; exception when others then null; end;
+  begin alter publication supabase_realtime add table public.profiles (id, name, role, active, archived, pending, created_at, adm_modules);
+  exception when others then null; end;
+end $$;
+-- Sem login, nada é lido nem gravado.
+revoke all on public.profiles, public.app_state, public.records, public.picks, public.closed, public.config_history,
+  public.counts, public.count_progress, public.adm_items from anon;
+-- Limpeza: registros, escolhas, fechamentos e fotos só para a gestão e as ASGs.
+create or replace function public.gav_cleaning() returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists(select 1 from profiles where id = auth.uid() and active and not archived and role in ('gestor','asg')) $$;
+revoke all on function public.gav_cleaning() from public, anon;
+grant execute on function public.gav_cleaning() to authenticated;
+drop policy if exists "registros: leitura" on public.records;
+create policy "registros: leitura" on public.records for select to authenticated using (public.gav_cleaning());
+drop policy if exists "escolhas: leitura" on public.picks;
+create policy "escolhas: leitura" on public.picks for select to authenticated using (public.gav_cleaning());
+drop policy if exists "fechamentos: leitura" on public.closed;
+create policy "fechamentos: leitura" on public.closed for select to authenticated using (public.gav_cleaning());
+drop policy if exists "histórico: leitura" on public.config_history;
+create policy "histórico: leitura" on public.config_history for select to authenticated using (public.gav_cleaning());
+drop policy if exists "fotos: leitura" on storage.objects;
+create policy "fotos: leitura" on storage.objects for select to authenticated using (bucket_id = 'fotos' and public.gav_cleaning());
+drop policy if exists "fotos: envio pela equipe" on storage.objects;
+create policy "fotos: envio pela equipe" on storage.objects for insert to authenticated
+  with check (bucket_id = 'fotos' and public.gav_cleaning() and split_part(name, '/', 1) = auth.uid()::text);
+-- Primeiro gestor automático só enquanto não existir nenhuma gestão ativa (evita que alguém assuma esse e-mail depois).
+create or replace function public.gav_first_manager() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if lower(new.email) = 'carlos.santos@gavresorts.com.br'
+     and not exists(select 1 from public.profiles where role = 'gestor' and active and not archived) then
+    insert into public.profiles(id, name, email, role) values (new.id, 'Carlos Santos', lower(new.email), 'gestor')
+    on conflict (id) do update set role = 'gestor', active = true;
+  end if;
+  return new;
+end $$;
 commit;

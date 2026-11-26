@@ -39,9 +39,21 @@ test('banco: área administrativa',async t=>{
   await actor(ids.analista);const d=await add('tarefa_feita',{task:tk.id,date:'2026-11-25'});await actor(ids.outro);assert.equal(await n('tarefa_feita'),1,'colega da mesma tarefa vê a conclusão');await db.query('delete from adm_items where id=$1',[d.id]);await owner();assert.equal(await n('tarefa_feita'),1,'outro analista não apaga');
   await actor(ids.analista);await db.query('delete from adm_items where id=$1',[d.id]);await owner();assert.equal(await n('tarefa_feita'),0);
   await actor(ids.garcom);assert.equal((await db.query('select count(*)::int n from adm_items')).rows[0].n,0);await assert.rejects(()=>add('chamado',{}),/row-level security/);await assert.rejects(()=>add('tarefa',{title:'x',assignees:[ids.garcom]}),/row-level security/)});
- await t.test('quem lançou não audita o próprio contrato; pagamento não é apagado por quem não é gestão',async()=>{await actor(ids.contratos);const c=await add('contrato',{cliente:'X',lancamento:{name:'C',id:ids.contratos}});
-  await assert.rejects(()=>db.query(`update adm_items set data=data||'{"audit":{"by":"C"}}' where id=$1`,[c.id]),/não audita/);await actor(ids.gestor);await db.query(`update adm_items set data=data||'{"audit":{"by":"G"}}' where id=$1`,[c.id]);
+ await t.test('quem lançou pode auditar o próprio contrato; pagamento não é apagado por quem não é gestão',async()=>{await actor(ids.contratos);const c=await add('contrato',{cliente:'X',lancamento:{name:'C',id:ids.contratos}});
+  await db.query(`update adm_items set data=data||'{"audit":{"by":"C"}}' where id=$1`,[c.id]);
   await actor(ids.analista);const pg=await add('pagamento',{value:1});await db.query('delete from adm_items where id=$1',[pg.id]);await owner();assert.equal((await db.query('select count(*)::int n from adm_items where id=$1',[pg.id])).rows[0].n,1,'analista não apaga');await actor(ids.gestor);await db.query('delete from adm_items where id=$1',[pg.id]);await owner();assert.equal((await db.query('select count(*)::int n from adm_items where id=$1',[pg.id])).rows[0].n,0)});
  await t.test('perfil inativo perde o acesso',async()=>{await owner();await db.query('update profiles set active=false where id=$1',[ids.contratos]);await actor(ids.contratos);assert.equal(await n('chamado'),0)});
+ await t.test('privacidade: e-mail só para a gestão e a própria pessoa; sem login nada é lido; gestor automático não volta',async()=>{
+  for(const who of ['garcom','analista','contratos']){await actor(ids[who]);await assert.rejects(()=>db.query('select email from profiles'),/permission denied/,who+' não lê e-mails');await assert.rejects(()=>db.query('select * from profiles'),/permission denied/);
+   if(who!=='contratos')assert.ok((await db.query('select id,name,role from profiles')).rows.length>3,who+' ainda vê nomes');const m=(await db.query('select * from gav_profile_emails()')).rows;assert.deepEqual(m.map(x=>x.id),[ids[who]],who+' recebe só o próprio e-mail')}
+  await owner();await db.query(`insert into records(key,data,date) values('k1','{}','2026-11-25') on conflict do nothing`);await db.query(`insert into storage.objects(bucket_id,name) values('fotos','x/1.jpg')`);
+  for(const who of ['garcom','analista']){await actor(ids[who]);assert.equal((await db.query('select count(*)::int n from records')).rows[0].n,0,who+' não lê registros da limpeza');assert.equal((await db.query(`select count(*)::int n from storage.objects where bucket_id='fotos'`)).rows[0].n,0,who+' não vê fotos')}
+  await actor(ids.gestor);assert.ok((await db.query('select * from gav_profile_emails()')).rows.length>4,'gestão recebe todos');
+  assert.equal((await db.query('select count(*)::int n from records')).rows[0].n,1,'gestão lê registros');
+  await db.query(`update profiles set name='Pessoa gestor' where id=$1`,[ids.gestor]);
+  await owner();await db.exec('set role anon');for(const tb of ['profiles','app_state','records','counts','adm_items'])await assert.rejects(()=>db.query(`select 1 from ${tb} limit 1`),/permission denied/,'anon '+tb);
+  await assert.rejects(()=>db.query('select * from gav_profile_emails()'),/permission denied/);
+  await owner();const intruso='a7777777-7777-4777-8777-777777777777';await db.query(`insert into auth.users(id,email) values($1,'carlos.santos@gavresorts.com.br')`,[intruso]);
+  assert.equal((await db.query('select count(*)::int n from profiles where id=$1',[intruso])).rows[0].n,0,'com gestão ativa, o e-mail do primeiro gestor não vira gestor')});
  }finally{await db.close()}
 });
