@@ -250,6 +250,17 @@ drop policy if exists "pedidos: envio" on storage.objects;
 create policy "pedidos: envio" on storage.objects for insert to authenticated with check (bucket_id = 'pedidos' and public.gav_adm_can('pedido', true));
 drop policy if exists "pedidos: exclusão" on storage.objects;
 create policy "pedidos: exclusão" on storage.objects for delete to authenticated using (bucket_id = 'pedidos' and public.gav_adm_can('pedido', true));
+-- Comprovante de cada pagamento dos caixas (recibo assinado ou nota fiscal, conforme o caixa), privado: só quem tem acesso aos caixas (e a gestão).
+insert into storage.buckets(id, name, public) values ('caixas', 'caixas', false) on conflict (id) do update set public = false;
+do $$ begin
+  update storage.buckets set file_size_limit = 10485760, allowed_mime_types = array['application/pdf','image/jpeg','image/png','image/webp'] where id = 'caixas';
+exception when undefined_column then null; end $$;
+drop policy if exists "caixas: leitura" on storage.objects;
+create policy "caixas: leitura" on storage.objects for select to authenticated using (bucket_id = 'caixas' and public.gav_adm_can('pagamento', false));
+drop policy if exists "caixas: envio" on storage.objects;
+create policy "caixas: envio" on storage.objects for insert to authenticated with check (bucket_id = 'caixas' and public.gav_adm_can('pagamento', true));
+drop policy if exists "caixas: exclusão" on storage.objects;
+create policy "caixas: exclusão" on storage.objects for delete to authenticated using (bucket_id = 'caixas' and public.gav_adm_can('pagamento', true));
 -- Primeiro gestor automático só enquanto não existir nenhuma gestão ativa (evita que alguém assuma esse e-mail depois).
 create or replace function public.gav_first_manager() returns trigger
 language plpgsql security definer set search_path = public as $$
