@@ -190,18 +190,26 @@ function oNotes(){const t=view.noteType||'parceiro',m=view.noteMonth||today().sl
  ${ps.length?`
  <div class="adm-list">${ps.map((p,i)=>`<button class="note-row" data-action="adm-note" data-partner="${p.id}" data-type="${t}"><span class="grow"><strong>${esc(p.data.name)}${partnerInMonth(p,m)?'':' <small class="muted">· saiu da lista</small>'}</strong><span class="step-row">${noteStatus(ns[i])}</span>${noteProblem(ns[i])&&ns[i].data.problem?.text?`<small class="late-text">${esc(ns[i].data.problem.text)}</small>`:''}${ns[i]?.data.number||ns[i]?.data.value||ns[i]?.data.log?.length?`<small>${[ns[i].data.number?'Nota '+esc(ns[i].data.number):'',ns[i].data.value?brl(ns[i].data.value):'',ns[i].data.log?.length?`última ação: ${esc(shortName(ns[i].data.log.at(-1).by))}, ${dateBR(ns[i].data.log.at(-1).at)}`:''].filter(Boolean).join(' · ')}</small>`:''}</span>${icon('chevron','chevron')}</button>`).join('')}</div>`
  :`<div class="empty">${icon('users')}Nenhum ${t==='parceiro'?'parceiro':'fornecedor de alimentação PJ'} neste mês. Toque em “Parceiros” para cadastrar.</div>`}`}
+// Etapa da nota: marca com um toque; a data (hoje) aparece só depois de marcar e pode ser trocada.
+const nStep=(k,label,date)=>`<div class="nstep${date?' on':''}"><label class="nstep-head"><input type="checkbox" data-step="${k}" ${date?'checked':''}><span class="dc-box" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><strong>${label}</strong></label><input type="date" name="${k}" value="${esc(date||'')}" aria-label="Data: ${label}" ${date?'':'hidden'}></div>`;
+document.addEventListener('change',e=>{const c=e.target;if(!(c instanceof HTMLInputElement))return;
+ if(c.dataset.step){const box=c.closest('.nstep'),d=box.querySelector('input[type=date]');box.classList.toggle('on',c.checked);d.hidden=!c.checked;d.value=c.checked?(d.value||today()):''}
+ if(c.dataset.reveal){const el=document.getElementById(c.dataset.reveal);if(el)el.hidden=!c.checked}});
 function noteDialog(partnerId,t){const p=admById(partnerId);t=t||partnerTypes(p)[0];const m=view.noteMonth||today().slice(0,7),n=noteOf(partnerId,m,t),d=n?.data||{steps:{}},s=d.steps||{},log=(d.log||[]).slice().reverse();
  openModal(modalHead(esc(p?.data.name||'Nota'))+`<p class="subtitle">${monthLabel(m)} · ${t==='alimentacao'?'Alimentação PJ':'Parceiro'}</p><form id="adm-form" data-kind="nota" data-id="${n?.id||''}" data-partner="${partnerId}" data-type="${t}" data-month="${m}" autocomplete="off">
- <div class="field-grid"><label class="field"><span>Nº da nota <em>(opcional)</em></span><input name="number" maxlength="40" value="${esc(d.number||'')}"></label>${moneyInput('value',d.value,'Valor <em>(opcional)</em>',false)}</div>
- <div class="field-grid">${dateInput('recebida',s.recebida?.date,'Nota recebida em')}${dateInput('vouchers',s.vouchers?.date,'Baixa nos vouchers em')}</div>
- <label class="check-row"><input type="checkbox" name="problem" ${noteProblem(n)?'checked':''}><span>Nota com problema<small>Recebida, mas precisa de correção. Fica pendente até desmarcar.</small></span></label>
- <label class="field"><span>Qual o problema <em>(obrigatório se marcar)</em></span><input name="problemText" maxlength="300" value="${esc(d.problem?.text||'')}" placeholder="Descreva o problema da nota"></label>
- <label class="check-row"><input type="checkbox" name="noteNone" ${s.recebida?.none?'checked':''}><span>Sem nota este mês<small>O parceiro não vai mandar nota neste mês. Sai dos pendentes.</small></span></label>
- <label class="check-row"><input type="checkbox" name="voucherMissing" ${s.vouchers?.missing?'checked':''}><span>Parceiro não entregou voucher este mês<small>Fica na lista de cobrança até chegar.</small></span></label>
- <label class="field"><span>Observação sobre nota ou voucher <em>(opcional)</em></span><input name="voucherReason" maxlength="200" value="${esc(s.vouchers?.reason||s.recebida?.reason||'')}" placeholder="Escreva o motivo, se houver"></label>
- <div class="field-grid">${dateInput('zeev',s.zeev?.date,'Lançada no Zeev em')}${dateInput('pagamento',s.pagamento?.date,'Pagamento previsto <em>(opcional)</em>')}</div>
- <label class="check-row"><input type="checkbox" name="paid" ${s.pagamento?.done?'checked':''}><span>Pagamento efetivado <em>(opcional)</em></span></label>
- <label class="field"><span>Observação geral <em>(opcional)</em></span><textarea name="obs" rows="2" maxlength="500">${esc(d.obs||'')}</textarea></label>
+ <div class="nsteps">${nStep('recebida','Nota recebida',s.recebida?.date)}${nStep('vouchers','Baixa nos vouchers',s.vouchers?.date)}${nStep('zeev','Lançada no Zeev',s.zeev?.date)}</div>
+ <details class="nmore"${noteProblem(n)||s.recebida?.none||s.vouchers?.missing?' open':''}><summary>Algum problema?<small>nota com problema · sem nota · voucher não entregue</small></summary>
+  <label class="check-row"><input type="checkbox" name="problem" data-reveal="problemBox" ${noteProblem(n)?'checked':''}><span>Nota com problema<small>Fica pendente até desmarcar.</small></span></label>
+  <label class="field" id="problemBox" ${noteProblem(n)?'':'hidden'}><span>Qual o problema?</span><input name="problemText" maxlength="300" value="${esc(d.problem?.text||'')}" placeholder="Ex.: valor errado"></label>
+  <label class="check-row"><input type="checkbox" name="noteNone" ${s.recebida?.none?'checked':''}><span>Sem nota este mês</span></label>
+  <label class="check-row"><input type="checkbox" name="voucherMissing" ${s.vouchers?.missing?'checked':''}><span>Não entregou voucher este mês</span></label>
+  <label class="field"><span>Motivo <em>(opcional)</em></span><input name="voucherReason" maxlength="200" value="${esc(s.vouchers?.reason||s.recebida?.reason||'')}"></label>
+ </details>
+ <details class="nmore"${d.number||d.value||s.pagamento?.date||d.obs?' open':''}><summary>Mais detalhes<small>nº, valor, pagamento, observação</small></summary>
+  <div class="field-grid"><label class="field"><span>Nº da nota</span><input name="number" maxlength="40" value="${esc(d.number||'')}"></label>${moneyInput('value',d.value,'Valor',false)}</div>
+  <div class="field-grid">${dateInput('pagamento',s.pagamento?.date,'Pagamento previsto')}<label class="check-row nm-paid"><input type="checkbox" name="paid" ${s.pagamento?.done?'checked':''}><span>Pagamento efetivado</span></label></div>
+  <label class="field"><span>Observação</span><textarea name="obs" rows="2" maxlength="500">${esc(d.obs||'')}</textarea></label>
+ </details>
  <p class="form-error" role="alert"></p><button class="button" type="submit">Salvar</button></form>
  ${log.length?`<div class="section-title"><h2>Histórico</h2><small>${log.length}</small></div><div class="history">${log.map(h=>`<p><span>${esc(h.text)}</span><small>${esc(h.by)} · ${dateBR(h.at)} às ${timeOf(h.at)}</small></p>`).join('')}</div>`:''}
  ${n&&isManager()?`<button class="small-link danger-text" data-action="adm-note-del" data-id="${n.id}">Apagar o registro deste mês</button>`:''}`)}
