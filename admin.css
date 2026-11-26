@@ -418,3 +418,6 @@ details.nmore[open]>summary{border-bottom:1px solid var(--line);margin-bottom:10
 .nm-paid{align-self:end;margin-bottom:14px}
 @media(max-width:560px){.nstep input[type=date]{width:132px}}
 @media(prefers-reduced-motion:reduce){.nstep.on .dc-box{animation:none}}
+.note-group{display:flex;flex-direction:column;gap:0}.note-group.multi{border:1px solid var(--line);border-radius:16px;padding:6px;background:#fafbfc;gap:6px}.note-group.multi .note-row{margin:0}
+.note-no{font-weight:600;color:var(--muted,#6b7280);font-size:13px}
+.note-add{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;margin:6px 0 4px 6px;padding:6px 12px;border:1px dashed #b9c2d3;border-radius:99px;background:#fff;color:var(--navy,#1f3a5f);font:inherit;font-size:13px;font-weight:700;cursor:pointer;min-height:36px}.note-add:hover{border-color:var(--navy,#1f3a5f);background:#f3f6fb}.note-add svg{width:15px;height:15px}
