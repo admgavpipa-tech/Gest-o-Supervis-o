@@ -377,3 +377,9 @@ details.more[open] summary{background:#f0f3f7}
 .adm-line>b{font-weight:600;white-space:nowrap;text-align:right}
 .adm-line.warn>svg{color:var(--red)}
 button.adm-line{width:100%;background:none;border:0;border-top:1px solid var(--line);font:inherit;text-align:left}button.adm-line:first-child{border-top:0}
+/* Garçom: marca d'água e privacidade fora de foco. */
+.main{position:relative}
+.wm{position:fixed;inset:0;z-index:30;pointer-events:none;overflow:hidden;display:flex;flex-wrap:wrap;align-content:flex-start;gap:70px 50px;padding:40px 0 0 0;transform:rotate(-24deg) scale(1.6);opacity:.075;user-select:none}
+.wm span{font:700 15px Figtree,system-ui,sans-serif;color:#0b306b;white-space:nowrap}
+body.privacy #app{filter:blur(18px) brightness(.35)}
+body.privacy::after{content:'Volte para o app para continuar';position:fixed;inset:0;display:grid;place-items:center;color:#fff;font:600 16px Figtree,system-ui,sans-serif;z-index:100}

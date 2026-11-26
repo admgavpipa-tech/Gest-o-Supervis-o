@@ -45,7 +45,7 @@ Na tela de entrada, **Quero me cadastrar** abre o formulário: nome, e-mail, sen
 Cada perfil vê só a própria parte; a gestão vê e configura tudo (Setores → Adm. no celular, grupo Administrativo no computador).
 
 - **Cronograma** (os dois perfis; a gestão vê o de todos, com o resumo de cada pessoa — feitas, atrasadas — e filtro por pessoa; cada um vê só o seu, inclusive as próprias atrasadas): a gestão cria a tarefa com data (uma vez só ou repetindo, na frequência que quiser) ou **pontual** (fica na lista até alguém concluir, com prazo opcional) e escolhe quem faz. Quem recebe marca como feita (sem foto). Tarefas de dias anteriores não feitas aparecem em Atrasadas por 14 dias.
-- **Auditoria de contratos** (assistente): as mesmas colunas da planilha da sala (cliente, aprovador, data da venda, turno, cotas, responsável pelo lançamento, auditado, data e responsável pela auditoria, erro, boletos, documentação UAU, CRM e Flow). Quem lança não audita o próprio contrato. Cada item auditado recebe **verde** (certo), **amarelo** (erro mediano, talvez não venha) ou **vermelho** (erro que vai ou corre muito risco de ser pontuado); a cor do contrato é a do pior item. Filtro por cor, busca por cliente e exportação do mês no formato da planilha.
+- **Auditoria de contratos** (assistente): as mesmas colunas da planilha da sala (cliente, aprovador, data da venda, cotas, responsável pelo lançamento, auditado, data e responsável pela auditoria, erro, boletos, documentação UAU, CRM e Flow). Quem lança não audita o próprio contrato. Cada item auditado recebe **verde** (certo), **amarelo** (erro mediano, talvez não venha) ou **vermelho** (erro que vai ou corre muito risco de ser pontuado); a cor do contrato é a do pior item. Filtro por cor, busca por cliente e exportação do mês no formato da planilha.
 - **Chamados** (assistente): número, data de abertura e descrição do chamado aberto em outro sistema; marcar como feito; **Copiar** copia os chamados em aberto no modelo da sala (“descrição” e, embaixo, “(Chamado aberto #número aberto dia dd/mm/aaaa)”).
 - **Notas fiscais** (analista): cadastro de parceiros e de alimentação PJ; por mês, uma linha por parceiro com nota recebida, baixa nos vouchers (ou “parceiro não entregou voucher este mês”), lançamento no Zeev e pagamento (previsto ou efetivado). Cada nota tem histórico de quem fez cada coisa e quando, e a lista “A cobrar” (com botão de copiar) mostra o que falta de nota e de voucher no mês.
 - **Pedidos** (analista): o registro é curto — fornecedor (obrigatório), mês, data de chegada, se a nota fiscal veio junto e a conferência (não conforme exige a descrição). Depois, na tela do pedido, cada etapa é registrada com um toque: nota fiscal (se não veio junto), lançado no Zeev e pagamento programado no Zeev. O andamento vai em comentários, cada um com usuário e hora; o comentário final pode fechar o pedido como resolvido. Alterações de datas também ficam registradas.
@@ -56,6 +56,15 @@ Cada perfil vê só a própria parte; a gestão vê e configura tudo (Setores �
 - **Parceiros**: entram na lista a partir de um mês e podem sair a partir de outro; os meses anteriores continuam com as notas registradas. “Sem nota este mês” tira o parceiro dos pendentes; voucher não entregue continua na cobrança. Há dois tipos de pendente: de receber e com problema na nota (com a descrição do problema); depois vem o lançado no Zeev. O pagamento é opcional e não entra no painel.
 - **Controle do gestor**: “Precisa de você” reúne as pendências de todas as áreas (cadastros, correções de contagem, contagem não enviada, limpeza atrasada, contratos vermelhos ou sem auditoria, pedidos com pendência, chamados novos (só o aviso; o resto é acompanhamento), tarefas atrasadas, saldo negativo), e abaixo vem um cartão por área.
 - Banco: rode `supabase/administrativo.sql` no SQL Editor (depois de `equipe.sql`). Ele cria a tabela `adm_items`, as permissões por perfil.
+
+## Detalhes recentes
+
+- **Contagem**: os itens que zeraram na contagem mais recente aparecem para a gestão em “Precisa de você” e no topo de Salão → Contagens, com o botão “Copiar para compras”.
+- **Garçons e print**: a web não consegue bloquear print de tela. A tela da contagem leva uma marca d'água discreta com o nome do garçom, a data e a hora, e o conteúdo fica escondido quando o app sai da frente (lista de apps abertos, troca de janela).
+- **Lista conjunta (ASG)**: quando duas ASGs assumem a mesma lista, o que uma conclui aparece concluído para a outra, com “Concluída por Maria às 10:32”, e a tela avisa que a lista é em conjunto.
+- **Cômodos**: ao criar ou editar, dá para escolher o ícone (ou deixar automático pelo nome).
+- **Contratos**: sem turno; responsável pelo lançamento e aprovador são escolhidos na lista do administrativo e da gestão.
+- **Gestores**: todo gestor tem o mesmo acesso e as mesmas telas, inclusive os cadastrados por outro gestor.
 
 ## Como funciona
 

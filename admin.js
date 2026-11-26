@@ -503,3 +503,7 @@ function contractDash(m){const cs=contractsOf(m),aud=cs.filter(c=>c.data.audit),
 // Cadastro: confere as senhas enquanto a pessoa digita.
 document.addEventListener('input',e=>{const f=e.target.closest?.('#signup-form');if(!f||!['password','password2'].includes(e.target.name))return;const a=f.querySelector('[name=password]').value,b=f.querySelector('[name=password2]').value,el=document.getElementById('su-match');if(!el)return;
  el.className='su-match'+(b?a===b&&a.length>=6?' ok':' bad':'');el.textContent=!b?'':a.length<6?'A senha precisa ter pelo menos 6 caracteres.':a===b?'As senhas conferem.':'As senhas ainda não conferem.'});
+// Garçom: esconde o conteúdo quando o app perde o foco (lista de apps abertos, troca de janela).
+{const guard=on=>{if(typeof isWaiter==='function'&&isWaiter())document.body?.classList.toggle('privacy',on)};
+ document.addEventListener('visibilitychange',()=>guard(document.visibilityState==='hidden'));
+ window.addEventListener?.('blur',()=>guard(true));window.addEventListener?.('focus',()=>guard(false));window.addEventListener?.('pagehide',()=>guard(true));window.addEventListener?.('pageshow',()=>guard(false))}
