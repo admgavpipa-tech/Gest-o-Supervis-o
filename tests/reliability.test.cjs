@@ -183,3 +183,7 @@ test('transferência para outra pessoa só vale depois do aceite; novidades avis
  f.run(`adm[2].data.status='recusada'`);assert.deepEqual(ids('ana'),['t1'],'recusada: volta para Ana')});
 test('index.html carrega a versão atual de admin.css, reliability.js e admin.js (sem cache velho)',()=>{const fs=require('fs'),path=require('path'),crypto=require('crypto'),root=path.join(__dirname,'..'),html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  for(const f of ['admin.css','reliability.js','admin.js']){const v=crypto.createHash('sha1').update(fs.readFileSync(path.join(root,f))).digest('hex').slice(0,10);assert.ok(html.includes(`${f}?v=${v}`),`${f} desatualizado no index.html: rode npm run versao`)}});
+test('observação do pagamento é opcional e não sai no recibo, no relatório nem na planilha',()=>{const f=fixture();f.run(`adm=[{id:'cx',kind:'caixa',data:{name:'Caixa',teams:[{id:'t',name:'Geral',amount:500}]}},{id:'p',kind:'pagamento',data:{caixa:'cx',team:'t',month:today().slice(0,7),date:today(),recipient:'Ana',value:50,action:'x',obs:'OBS-SECRETA-123'}}];view.cash='cx'`);
+ assert.match(f.run('oCash()'),/OBS-SECRETA-123/);assert.doesNotMatch(f.run(`receiptHtml(adm[1])`),/OBS-SECRETA/);
+ const src=require('fs').readFileSync(require('path').join(__dirname,'..','admin.js'),'utf8'),body=n=>{const i=src.indexOf('function '+n);return src.slice(i,src.indexOf('\nfunction ',i+10))};
+ for(const n of ['printCashReport','exportCash','receiptHtml'])assert.doesNotMatch(body(n),/\.obs\b/,n+' não usa a observação')});

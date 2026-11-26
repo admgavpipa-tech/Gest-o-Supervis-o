@@ -460,3 +460,4 @@ details.team-day{border:1px solid var(--line);border-radius:14px;background:#fff
 .att-open{display:flex;align-items:center;gap:12px;flex:1;min-width:0;border:0;background:none;padding:0;font:inherit;text-align:left;cursor:pointer;color:inherit}
 .att-swap{flex:none;padding:6px 12px;border:1px solid #9fcdb4;border-radius:99px;background:#fff;color:#1f5f41;font-size:13px;font-weight:700;cursor:pointer}.att-swap:hover{background:#e6f3ec}
 .field .att span{margin:0;font-size:inherit;font-weight:400}.field .att .att-ic{display:grid}.field .att .grow{display:flex}.field .att strong{font-weight:700}.field .att small{font-weight:400}
+.pay-obs{display:flex;gap:6px;align-items:flex-start;margin:4px 0 0;padding:6px 10px;border-radius:8px;background:#f5f6f8;color:#4b5563;font-size:13px;white-space:pre-wrap}.pay-obs svg{flex:none;width:14px;height:14px;margin-top:2px}
