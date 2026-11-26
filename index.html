@@ -201,7 +201,7 @@
 .group-chip.cheer{animation:cheer .5s cubic-bezier(.2,1.4,.4,1)}@keyframes cheer{40%{transform:scale(1.12)}}
 h1,h2{font-weight:500;letter-spacing:-.5px}.dash-big,.mini-stats b,.pick-count b,.count-head strong,.shift-sum-head strong{font-weight:500}
 </style>
-<link rel="stylesheet" href="admin.css?v=8789a105f8">
+<link rel="stylesheet" href="admin.css?v=0c9e771786">
 </head><body>
 <div class="shell">
 <div id="app" class="phone" aria-live="polite"></div>
@@ -381,6 +381,7 @@ function homeInbox(){const d=today(),h=spHour(),items=[],add=(tone,area,ic,title
   const nt=newTickets();if(nt.length)add('info','Administrativo · Chamados','ticket',`${plural(nt.length,'chamado novo','chamados novos')}`,nt.slice(0,2).map(x=>`#${String(x.data.number).replace(/^#/,'')} ${x.data.description||''}`.slice(0,60)).join(' · '),'o-tickets');
   const pl=pontualLate(),lt=al.length+pl.length;if(lt)add('warn','Administrativo','tasks',`${plural(lt,'tarefa do administrativo atrasada','tarefas do administrativo atrasadas')}`,[...new Set([...al.map(x=>x.t.data.title),...pl.map(t=>t.data.title)])].slice(0,2).join(' · '),'o-tasks');
   if(neg.length)add('late','Caixas','wallet','Saldo negativo no caixa',neg.join(' · '),'o-cash');
+  {const rep=cashes().filter(c=>c.data.active!==false).map(c=>({c,s:cashSummary(c,m)})).filter(x=>x.s.due>0);if(rep.length)add('info','Administrativo · Caixas','wallet',rep.length===1?`Repor ${brl(rep[0].s.due)} no ${rep[0].c.data.name}`:`${rep.length} caixas para repor`,rep.map(x=>`${x.c.data.name}: falta ${brl(x.s.due)}`).join(' · '),'o-cash')}
   const up=unpaidPays();if(up.length)add('warn','Administrativo · Caixas','wallet',`${plural(up.length,'pagamento aguardando','pagamentos aguardando')} a sua transferência`,`${brl(up.reduce((a,p)=>a+Number(p.data.value||0),0))} · ${up.slice(0,2).map(p=>p.data.recipient).join(', ')}`,'o-cash')}
  return items}
 function gHome(){const all=allToday(),s=stats(all),n=s.total-s.pending,pc=s.total?Math.round(n/s.total*100):0,d=today(),items=homeInbox(),hasAdm=typeof admOf==='function';
@@ -831,6 +832,6 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches?.('
 
 </script>
 <script src="reliability.js?v=546dad82ff"></script>
-<script src="admin.js?v=b357e54cea"></script>
+<script src="admin.js?v=a362c61535"></script>
 <script>render();boot();</script>
 </body></html>

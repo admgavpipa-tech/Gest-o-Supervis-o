@@ -191,3 +191,14 @@ test('início da gestão não traz aviso de parceiros a cobrar',()=>{const f=fix
 test('pagamento vai para o mês da data: mudar a data para dezembro leva o pagamento para dezembro',()=>{const f=fixture();f.run(`adm=[{id:'cx',kind:'caixa',data:{name:'Adm',teams:[{id:'t',name:'Geral',amount:500}]}},{id:'p',kind:'pagamento',data:{caixa:'cx',team:'t',month:'2026-11',date:'2026-12-03',recipient:'Ana',value:50,action:'x'}},{id:'q',kind:'pagamento',data:{caixa:'cx',team:'t',month:'2026-11',recipient:'Sem data',value:10,action:'y'}}]`);
  assert.deepEqual(JSON.parse(f.run(`JSON.stringify([paysOf('cx','2026-11').map(p=>p.id),paysOf('cx','2026-12').map(p=>p.id)])`)),[['q'],['p']]);
  assert.equal(f.run(`cashSummary(admById('cx'),'2026-12').spent`),50)});
+test('caixa de valor fixo: a sobra passa para o mês seguinte e a reposição completa o valor',()=>{const f=fixture();f.run(`db.users[0].role='gestor';adm=[{id:'cx',kind:'caixa',data:{name:'Adm',teams:[{id:'t',name:'Geral',amount:4000}]},created_at:'2026-11-01T12:00:00Z'},
+ {id:'p1',kind:'pagamento',data:{caixa:'cx',team:'t',month:'2026-11',date:'2026-11-10',recipient:'A',value:1500}},{id:'p2',kind:'pagamento',data:{caixa:'cx',team:'t',month:'2026-11',date:'2026-11-20',recipient:'B',value:500}},
+ {id:'p3',kind:'pagamento',data:{caixa:'cx',team:'t',month:'2026-12',date:'2026-12-03',recipient:'C',value:300}}];view.cash='cx'`);
+ const sm=m=>JSON.parse(f.run(`JSON.stringify((({start,refill,spent,left,due})=>({start,refill,spent,left,due}))(cashSummary(admById('cx'),'${m}')))`));
+ assert.deepEqual(sm('2026-11'),{start:4000,refill:0,spent:2000,left:2000,due:0},'primeiro mês começa cheio');
+ assert.deepEqual(sm('2026-12'),{start:2000,refill:0,spent:300,left:1700,due:2000},'dezembro começa com a sobra e falta repor 2.000');
+ f.run(`adm.push({id:'r1',kind:'reposicao',data:{caixa:'cx',team:'t',date:'2026-12-05',value:2000},created_by_name:'Carlos'})`);
+ assert.deepEqual(sm('2026-12'),{start:2000,refill:2000,spent:300,left:3700,due:0});assert.deepEqual(sm('2027-01'),{start:3700,refill:0,spent:0,left:3700,due:300});
+ f.run(`view.cashMonth='2026-12'`);const h=f.run('oCash()');assert.match(h,/Saldo anterior/);assert.match(h,/reposto em 05\/12\/2026/);assert.match(h,/Registrar reposição/);
+ f.run(`view.cashMonth='2027-01'`);assert.match(f.run('oCash()'),/Falta repor R\$\s?300,00/);
+ f.run(`db.users[0].role='analista'`);assert.doesNotMatch(f.run('oCash()'),/data-action="adm-refill-new"/,'analista não registra reposição')});

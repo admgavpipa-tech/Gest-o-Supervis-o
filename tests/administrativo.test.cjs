@@ -75,6 +75,9 @@ test('banco: área administrativa',async t=>{
   await actor(ids.analista);assert.equal(await c(),1);await db.query(`insert into storage.objects(bucket_id,name) values('caixas','c1/p1/r2.pdf')`);
   await actor(ids.garcom);assert.equal(await c(),0);await assert.rejects(()=>db.query(`insert into storage.objects(bucket_id,name) values('caixas','x.pdf')`),/row-level security/);
   await actor(ids.gestor);assert.equal(await c(),2)});
+ await t.test('reposição do caixa: só a gestão registra; quem cuida dos caixas vê',async()=>{await actor(ids.gestor);const r=await add('reposicao',{caixa:'c',value:300,date:'2026-12-02'});assert.equal(r.created_by,ids.gestor);
+  await actor(ids.analista);assert.equal(await n('reposicao'),1);await assert.rejects(()=>add('reposicao',{value:1}),/row-level security/);await db.query('delete from adm_items where id=$1',[r.id]);await db.query(`update adm_items set data=data||'{"value":9}' where id=$1`,[r.id]);
+  await owner();assert.equal((await db.query('select data->>$2 v from adm_items where id=$1',[r.id,'value'])).rows[0].v,'300','analista não altera nem apaga');await actor(ids.garcom);assert.equal(await n('reposicao'),0)});
  await t.test('privacidade: e-mail só para a gestão e a própria pessoa; sem login nada é lido; gestor automático não volta',async()=>{
   for(const who of ['garcom','analista','contratos']){await actor(ids[who]);await assert.rejects(()=>db.query('select email from profiles'),/permission denied/,who+' não lê e-mails');await assert.rejects(()=>db.query('select * from profiles'),/permission denied/);
    if(who!=='contratos')assert.ok((await db.query('select id,name,role from profiles')).rows.length>3,who+' ainda vê nomes');const m=(await db.query('select * from gav_profile_emails()')).rows;assert.deepEqual(m.map(x=>x.id),[ids[who]],who+' recebe só o próprio e-mail')}

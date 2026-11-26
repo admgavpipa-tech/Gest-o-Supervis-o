@@ -42,7 +42,8 @@ create table if not exists public.adm_items(
 create index if not exists adm_items_kind_idx on public.adm_items(kind, created_at);
 --   tarefa_transf: tarefa do dia passada de uma pessoa para outra (atestado, folga). Não muda o cadastro da tarefa.
 alter table public.adm_items drop constraint if exists adm_items_kind_check;
-alter table public.adm_items add constraint adm_items_kind_check check (kind in ('tarefa','tarefa_feita','tarefa_transf','chamado','parceiro','nota','pedido','caixa','pagamento','contrato'));
+alter table public.adm_items add constraint adm_items_kind_check check (kind in ('tarefa','tarefa_feita','tarefa_transf','chamado','parceiro','nota','pedido','caixa','pagamento','reposicao','contrato'));
+--   reposicao: depósito feito pela gestão para repor o caixa até o valor fixo (a sobra do mês passa para o seguinte).
 
 -- Funções de cada pessoa do administrativo. Vazio (null) = padrão da função:
 -- analista: notas, pedidos e caixas; assistente de contratos: contratos e chamados. A gestão pode liberar outras.
@@ -75,6 +76,7 @@ language sql stable security definer set search_path = public as $$
     when 'pedido' then 'pedidos' = any(m)
     when 'caixa' then not p_write and 'caixas' = any(m)
     when 'pagamento' then 'caixas' = any(m)
+    when 'reposicao' then not p_write and 'caixas' = any(m)
     else false end from (select public.gav_adm_modules() m) x), false) end $$;
 revoke all on function public.gav_adm_can(text, boolean) from public, anon;
 grant execute on function public.gav_adm_can(text, boolean) to authenticated;
