@@ -145,3 +145,7 @@ test('planilhas exportadas: texto digitado não vira fórmula no Excel',()=>{con
  assert.equal(f.run(`csvCell('=HYPERLINK("http://x","clique")')`),`"'=HYPERLINK(""http://x"",""clique"")"`);
  for(const v of ['+1+cmd','-2+3','@SUM(A1)'])assert.ok(f.run(`csvCell(${JSON.stringify(v)})`).startsWith(`"'`),v);
  assert.equal(f.run(`csvCell('-10,50')`),'"-10,50"','número negativo continua número');assert.equal(f.run(`csvCell(12)`),'"12"');assert.equal(f.run(`csvCell(null)`),'""')});
+test('parceiro dos dois tipos: aparece em parceiros e em alimentação PJ, com nota própria em cada um',()=>{const f=fixture();f.run(`db.users[0].role='analista';var m=today().slice(0,7);adm=[{id:'a',kind:'parceiro',data:{name:'Fases',type:'parceiro',types:['parceiro','alimentacao'],since:'2020-01'}},{id:'b',kind:'parceiro',data:{name:'Velho',type:'alimentacao',since:'2020-01'}},{id:'n',kind:'nota',data:{partner:'a',month:m,type:'parceiro',steps:{recebida:{date:today()}}}}]`);
+ assert.deepEqual(JSON.parse(f.run(`JSON.stringify([partnersOf('parceiro').map(p=>p.id),partnersOf('alimentacao').map(p=>p.id)])`)),[['a'],['a','b']]);
+ assert.equal(f.run(`notePending(noteOf('a',m,'parceiro'))`),false,'nota de parceiro recebida');assert.equal(f.run(`notePending(noteOf('a',m,'alimentacao'))`),true,'a de alimentação continua pendente');
+ assert.equal(f.run(`noteCharges('alimentacao',m).length`),2);assert.equal(f.run(`noteCharges('parceiro',m).filter(x=>x.miss.includes('nota fiscal')).length`),0)});
