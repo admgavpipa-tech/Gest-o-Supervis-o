@@ -204,11 +204,10 @@ document.addEventListener('change',e=>{const c=e.target;if(!(c instanceof HTMLIn
 function noteDialog(partnerId,t){const p=admById(partnerId);t=t||partnerTypes(p)[0];const m=view.noteMonth||today().slice(0,7),n=noteOf(partnerId,m,t),d=n?.data||{steps:{}},s=d.steps||{},log=(d.log||[]).slice().reverse();
  openModal(modalHead(esc(p?.data.name||'Nota'))+`<p class="subtitle">${monthLabel(m)} · ${t==='alimentacao'?'Alimentação PJ':'Parceiro'}</p><form id="adm-form" data-kind="nota" data-id="${n?.id||''}" data-partner="${partnerId}" data-type="${t}" data-month="${m}" autocomplete="off">
  <div class="nsteps">${nStep('recebida','Nota recebida',s.recebida?.date)}${nStep('vouchers','Baixa nos vouchers',s.vouchers?.date)}${nStep('zeev','Lançada no Zeev',s.zeev?.date)}</div>
- <details class="nmore"${noteProblem(n)||s.recebida?.none||s.vouchers?.missing?' open':''}><summary>Algum problema?<small>nota com problema · sem nota · voucher não entregue</small></summary>
+ <details class="nmore"${noteProblem(n)||s.recebida?.none?' open':''}><summary>Algum problema?<small>nota com problema · sem nota</small></summary>
   <label class="check-row"><input type="checkbox" name="problem" data-reveal="problemBox" ${noteProblem(n)?'checked':''}><span>Nota com problema<small>Fica pendente até desmarcar.</small></span></label>
   <label class="field" id="problemBox" ${noteProblem(n)?'':'hidden'}><span>Qual o problema?</span><input name="problemText" maxlength="300" value="${esc(d.problem?.text||'')}" placeholder="Ex.: valor errado"></label>
   <label class="check-row"><input type="checkbox" name="noteNone" ${s.recebida?.none?'checked':''}><span>Sem nota este mês</span></label>
-  <label class="check-row"><input type="checkbox" name="voucherMissing" ${s.vouchers?.missing?'checked':''}><span>Não entregou voucher este mês</span></label>
   <label class="field"><span>Motivo <em>(opcional)</em></span><input name="voucherReason" maxlength="200" value="${esc(s.vouchers?.reason||s.recebida?.reason||'')}"></label>
  </details>
  <details class="nmore"${d.number||d.value||s.pagamento?.date||d.obs?' open':''}><summary>Mais detalhes<small>nº, valor, pagamento, observação</small></summary>
