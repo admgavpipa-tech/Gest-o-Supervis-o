@@ -65,6 +65,11 @@ test('banco: área administrativa',async t=>{
   await actor(ids.analista);assert.equal(await c(),1);await db.query(`insert into storage.objects(bucket_id,name) values('vouchers','p/2026-11/b.pdf')`);
   await actor(ids.garcom);assert.equal(await c(),0);await assert.rejects(()=>db.query(`insert into storage.objects(bucket_id,name) values('vouchers','x.pdf')`),/row-level security/);
   await actor(ids.gestor);assert.equal(await c(),2);await owner();assert.equal((await db.query(`select public from storage.buckets where id='vouchers'`)).rows[0].public,false)});
+ await t.test('nota fiscal do pedido: só quem cuida dos pedidos vê e envia',async()=>{await owner();await db.query(`insert into storage.objects(bucket_id,name) values('pedidos','o1/nf.pdf')`);
+  const c=async()=>(await db.query(`select count(*)::int n from storage.objects where bucket_id='pedidos'`)).rows[0].n;
+  await actor(ids.analista);assert.equal(await c(),1);await db.query(`insert into storage.objects(bucket_id,name) values('pedidos','o1/nf2.pdf')`);
+  await actor(ids.garcom);assert.equal(await c(),0);await assert.rejects(()=>db.query(`insert into storage.objects(bucket_id,name) values('pedidos','x.pdf')`),/row-level security/);
+  await actor(ids.gestor);assert.equal(await c(),2)});
  await t.test('privacidade: e-mail só para a gestão e a própria pessoa; sem login nada é lido; gestor automático não volta',async()=>{
   for(const who of ['garcom','analista','contratos']){await actor(ids[who]);await assert.rejects(()=>db.query('select email from profiles'),/permission denied/,who+' não lê e-mails');await assert.rejects(()=>db.query('select * from profiles'),/permission denied/);
    if(who!=='contratos')assert.ok((await db.query('select id,name,role from profiles')).rows.length>3,who+' ainda vê nomes');const m=(await db.query('select * from gav_profile_emails()')).rows;assert.deepEqual(m.map(x=>x.id),[ids[who]],who+' recebe só o próprio e-mail')}
