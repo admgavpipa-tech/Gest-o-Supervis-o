@@ -312,7 +312,8 @@ begin
  for v in select x from jsonb_array_elements(coalesce(changes->'records'->'up','[]')) x loop
   k:=v->>'key'; olddata:=null; task:=null;
   select r.data into olddata from records r where r.key=k;
-  if olddata is not null and olddata->>'by' is distinct from actor::text and not is_manager() then raise exception 'Registro pertence a outra pessoa.' using errcode='42501'; end if;
+  -- Lista em conjunto: quem divide a lista pode concluir o que a colega justificou; o resto continua de quem registrou.
+  if olddata is not null and olddata->>'by' is distinct from actor::text and not is_manager() and not (olddata->>'status'='justified' and v->'data'->>'status'='done') then raise exception 'Registro pertence a outra pessoa.' using errcode='42501'; end if;
   if (v->>'date')::date<>d then raise exception 'Só é possível registrar a rotina de hoje.'; end if;
   if exists(select 1 from closed where asg_id=actor and date=d) then raise exception 'Dia já finalizado.'; end if;
   select e.data into task from gav_expected(ownlists,d) e where e.key=k;
@@ -686,6 +687,11 @@ begin
     new.created_by := auth.uid(); new.created_by_name := who; new.created_at := now();
   else
     new.kind := old.kind; new.created_by := old.created_by; new.created_by_name := old.created_by_name; new.created_at := old.created_at;
+    -- Contrato: quem lançou não audita o próprio contrato (a gestão pode).
+    if new.kind = 'contrato' and (new.data->'audit') is distinct from (old.data->'audit') and new.data->'audit' is not null
+       and new.data->'lancamento'->>'id' = auth.uid()::text and not public.is_manager() then
+      raise exception 'Quem lançou não audita o próprio contrato.' using errcode = '42501';
+    end if;
   end if;
   new.updated_by := auth.uid(); new.updated_by_name := who; new.updated_at := now();
   return new;
@@ -712,7 +718,7 @@ create policy "adm: alteração" on public.adm_items for update to authenticated
   with check (public.gav_adm_can(kind, true) or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office() and data->'assignees' = jsonb_build_array(auth.uid()::text)));
 drop policy if exists "adm: exclusão" on public.adm_items;
 create policy "adm: exclusão" on public.adm_items for delete to authenticated
-  using ((public.gav_adm_can(kind, true) and (kind <> 'tarefa_feita' or created_by = auth.uid() or public.is_manager()))
+  using ((public.gav_adm_can(kind, true) and (kind <> 'tarefa_feita' or created_by = auth.uid() or public.is_manager()) and (kind <> 'pagamento' or public.is_manager()))
     or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office()));
 
 do $$ begin alter publication supabase_realtime add table public.adm_items; exception when duplicate_object then null; end $$;

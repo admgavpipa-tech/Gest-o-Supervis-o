@@ -92,6 +92,11 @@ begin
     new.created_by := auth.uid(); new.created_by_name := who; new.created_at := now();
   else
     new.kind := old.kind; new.created_by := old.created_by; new.created_by_name := old.created_by_name; new.created_at := old.created_at;
+    -- Contrato: quem lançou não audita o próprio contrato (a gestão pode).
+    if new.kind = 'contrato' and (new.data->'audit') is distinct from (old.data->'audit') and new.data->'audit' is not null
+       and new.data->'lancamento'->>'id' = auth.uid()::text and not public.is_manager() then
+      raise exception 'Quem lançou não audita o próprio contrato.' using errcode = '42501';
+    end if;
   end if;
   new.updated_by := auth.uid(); new.updated_by_name := who; new.updated_at := now();
   return new;
@@ -118,7 +123,7 @@ create policy "adm: alteração" on public.adm_items for update to authenticated
   with check (public.gav_adm_can(kind, true) or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office() and data->'assignees' = jsonb_build_array(auth.uid()::text)));
 drop policy if exists "adm: exclusão" on public.adm_items;
 create policy "adm: exclusão" on public.adm_items for delete to authenticated
-  using ((public.gav_adm_can(kind, true) and (kind <> 'tarefa_feita' or created_by = auth.uid() or public.is_manager()))
+  using ((public.gav_adm_can(kind, true) and (kind <> 'tarefa_feita' or created_by = auth.uid() or public.is_manager()) and (kind <> 'pagamento' or public.is_manager()))
     or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office()));
 
 do $$ begin alter publication supabase_realtime add table public.adm_items; exception when duplicate_object then null; end $$;

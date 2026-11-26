@@ -156,7 +156,8 @@ begin
  for v in select x from jsonb_array_elements(coalesce(changes->'records'->'up','[]')) x loop
   k:=v->>'key'; olddata:=null; task:=null;
   select r.data into olddata from records r where r.key=k;
-  if olddata is not null and olddata->>'by' is distinct from actor::text and not is_manager() then raise exception 'Registro pertence a outra pessoa.' using errcode='42501'; end if;
+  -- Lista em conjunto: quem divide a lista pode concluir o que a colega justificou; o resto continua de quem registrou.
+  if olddata is not null and olddata->>'by' is distinct from actor::text and not is_manager() and not (olddata->>'status'='justified' and v->'data'->>'status'='done') then raise exception 'Registro pertence a outra pessoa.' using errcode='42501'; end if;
   if (v->>'date')::date<>d then raise exception 'Só é possível registrar a rotina de hoje.'; end if;
   if exists(select 1 from closed where asg_id=actor and date=d) then raise exception 'Dia já finalizado.'; end if;
   select e.data into task from gav_expected(ownlists,d) e where e.key=k;

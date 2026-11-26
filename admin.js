@@ -26,7 +26,11 @@ const admErrText=e=>!e?'Não foi possível salvar.':/adm_items|relation|schema c
 async function loadAdm(){if(!me()||!(isManager()||isOffice())){adm=[];admError='';return}
  try{adm=await fetchAll('adm_items','*',q=>q,'id');admError=''}catch(e){adm=[];admError=/adm_items|relation|PGRST20[05]|schema cache/i.test(`${e.message} ${e.code}`)?'Falta atualizar o banco: execute supabase/administrativo.sql no SQL Editor do Supabase.':'Não foi possível carregar os dados. Confira a internet.'}}
 {const base=loadCounts;loadCounts=async function(){await base();await loadAdm()}}
-async function admSave(kind,data,id){const q=id?sb.from('adm_items').update({data}).eq('id',id):sb.from('adm_items').insert({kind,data});
+// Duas pessoas no mesmo registro: antes de salvar, junta comentários e histórico da versão mais nova do servidor.
+const entryKey=e=>`${e?.at}|${e?.by}|${e?.text}`;
+function mergeEntries(a=[],b=[]){const seen=new Set(),out=[];for(const e of [...a,...b]){const k=entryKey(e);if(!seen.has(k)){seen.add(k);out.push(e)}}return out.sort((x,y)=>String(x.at).localeCompare(String(y.at)))}
+async function admSave(kind,data,id){if(id){try{const {data:fresh}=await sb.from('adm_items').select().eq('id',id).maybeSingle();if(fresh?.data){for(const k of ['comments','log'])if(Array.isArray(fresh.data[k])||Array.isArray(data[k]))data={...data,[k]:mergeEntries(fresh.data[k],data[k])}}}catch(e){}}
+ const q=id?sb.from('adm_items').update({data}).eq('id',id):sb.from('adm_items').insert({kind,data});
  const {data:row,error}=await q.select().maybeSingle();if(error||!row){toast(admErrText(error));return null}
  const i=adm.findIndex(x=>x.id===row.id);if(i>=0)adm[i]=row;else adm.push(row);return row}
 // Histórico: cada lançamento guarda quem fez o quê e quando.
@@ -178,7 +182,7 @@ function oNotes(){const t=view.noteType||'parceiro',m=view.noteMonth||today().sl
  <div class="adm-list">${ps.map((p,i)=>`<button class="note-row" data-action="adm-note" data-partner="${p.id}"><span class="grow"><strong>${esc(p.data.name)}${partnerInMonth(p,m)?'':' <small class="muted">· saiu da lista</small>'}</strong><span class="step-row">${noteStatus(ns[i])}</span>${ns[i]?.data.number||ns[i]?.data.value||ns[i]?.data.log?.length?`<small>${[ns[i].data.number?'Nota '+esc(ns[i].data.number):'',ns[i].data.value?brl(ns[i].data.value):'',ns[i].data.log?.length?`última ação: ${esc(shortName(ns[i].data.log.at(-1).by))}, ${dateBR(ns[i].data.log.at(-1).at)}`:''].filter(Boolean).join(' · ')}</small>`:''}</span>${icon('chevron','chevron')}</button>`).join('')}</div>`
  :`<div class="empty">${icon('users')}Nenhum ${t==='parceiro'?'parceiro':'fornecedor de alimentação PJ'} neste mês. Toque em “Parceiros” para cadastrar.</div>`}`}
 function noteDialog(partnerId){const p=admById(partnerId),m=view.noteMonth||today().slice(0,7),n=noteOf(partnerId,m),d=n?.data||{steps:{}},s=d.steps||{},log=(d.log||[]).slice().reverse();
- openModal(modalHead(p?.data.name||'Nota')+`<p class="subtitle">${monthLabel(m)} · ${p?.data.type==='alimentacao'?'Alimentação PJ':'Parceiro'}</p><form id="adm-form" data-kind="nota" data-id="${n?.id||''}" data-partner="${partnerId}" data-month="${m}" autocomplete="off">
+ openModal(modalHead(esc(p?.data.name||'Nota'))+`<p class="subtitle">${monthLabel(m)} · ${p?.data.type==='alimentacao'?'Alimentação PJ':'Parceiro'}</p><form id="adm-form" data-kind="nota" data-id="${n?.id||''}" data-partner="${partnerId}" data-month="${m}" autocomplete="off">
  <div class="field-grid"><label class="field"><span>Nº da nota <em>(opcional)</em></span><input name="number" maxlength="40" value="${esc(d.number||'')}"></label>${moneyInput('value',d.value,'Valor <em>(opcional)</em>',false)}</div>
  <div class="field-grid">${dateInput('recebida',s.recebida?.date,'Nota recebida em')}${dateInput('vouchers',s.vouchers?.date,'Baixa nos vouchers em')}</div>
  <label class="check-row"><input type="checkbox" name="problem" ${noteProblem(n)?'checked':''}><span>Nota com problema<small>Recebida, mas precisa de correção. Fica pendente até desmarcar.</small></span></label>
@@ -456,7 +460,7 @@ function contractDialog(c){const d=c?.data||{dataVenda:today(),turno:spHour()<15
  <div class="field"><span>Turno</span><div class="role-pick"><label class="radio-card"><input type="radio" name="turno" value="DIURNO" ${d.turno!=='NOTURNO'?'checked':''}><span><strong>Diurno</strong></span></label><label class="radio-card"><input type="radio" name="turno" value="NOTURNO" ${d.turno==='NOTURNO'?'checked':''}><span><strong>Noturno</strong></span></label></div></div>
  <datalist id="people-list-d">${peopleSuggest().map(n=>`<option value="${esc(n)}">`).join('')}</datalist><p class="form-error" role="alert"></p><button class="button" type="submit">Salvar</button></form>`)}
 function contractView(c){const d=c.data,a=d.audit,l=contractLevel(c),own=d.lancamento?.id===authId&&!isManager();
- openModal(modalHead(d.cliente)+`<div class="contract-head lvl-${l}"><span>${l==='pendente'?'Aguardando auditoria':`Auditado em ${dateBR(a.date)} por ${esc(a.by)}`}</span>${l!=='pendente'?`<b>${LEVELS[l][0]}</b>`:''}</div>
+ openModal(modalHead(esc(d.cliente))+`<div class="contract-head lvl-${l}"><span>${l==='pendente'?'Aguardando auditoria':`Auditado em ${dateBR(a.date)} por ${esc(a.by)}`}</span>${l!=='pendente'?`<b>${LEVELS[l][0]}</b>`:''}</div>
  <dl class="order-facts contract-facts"><div><dt>Aprovador</dt><dd>${esc(d.aprovador||'—')}</dd></div><div><dt>Data da venda</dt><dd>${dateBR(d.dataVenda)}</dd></div><div><dt>Turno</dt><dd>${esc(turnoLabel(d.turno))}</dd></div><div><dt>Cotas</dt><dd>${esc(d.cotas||'—')}</dd></div><div><dt>Lançamento</dt><dd>${esc(d.lancamento?.name||'—')}</dd></div></dl>
  ${a?`<div class="check-list-view">${AUDIT_CHECKS.map(([k,lb])=>{const x=d.checks?.[k]||{};return `<div class="ckv ck-${x.level||'none'}"><strong>${lb}</strong><span>${esc(checkText(c,k)||'—')}</span></div>`}).join('')}</div>`:''}
  ${own&&!a?'<p class="micro">Você lançou este contrato. A auditoria é feita por outra pessoa.</p>':''}
