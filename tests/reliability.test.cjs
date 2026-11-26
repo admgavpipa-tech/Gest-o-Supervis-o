@@ -153,3 +153,5 @@ test('CPF e CNPJ ganham pontos, barra e traço automaticamente',()=>{const f=fix
  assert.equal(m('12345678901'),'123.456.789-01');assert.equal(m('40831644001703'),'40.831.644/0017-03');assert.equal(m('123.456.789-01'),'123.456.789-01');
  assert.equal(m('1234'),'123.4');assert.equal(m('1234567'),'123.456.7');assert.equal(m('123456789'),'123.456.789');assert.equal(m('1234567890'),'123.456.789-0');
  assert.equal(m('123456789012'),'12.345.678/9012');assert.equal(m('1234567890123'),'12.345.678/9012-3');assert.equal(m(''),'');assert.equal(m('isento'),'isento')});
+test('parceiro marcado "sem nota este mês" sai da cobrança (nota e voucher)',()=>{const f=fixture();f.run(`db.users[0].role='analista';var m=today().slice(0,7);adm=[{id:'a',kind:'parceiro',data:{name:'Fases',type:'parceiro',since:'2020-01'}},{id:'n',kind:'nota',data:{partner:'a',month:m,type:'parceiro',steps:{recebida:{none:true}}}}]`);
+ assert.equal(f.run(`noteCharges('parceiro',m).length`),0);assert.equal(f.run('pendingPartners().length'),0);assert.doesNotMatch(f.run('oNotes()'),/Pendentes em/)});
