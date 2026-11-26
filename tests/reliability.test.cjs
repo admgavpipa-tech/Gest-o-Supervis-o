@@ -188,3 +188,6 @@ test('observação do pagamento é opcional e não sai no recibo, no relatório 
  const src=require('fs').readFileSync(require('path').join(__dirname,'..','admin.js'),'utf8'),body=n=>{const i=src.indexOf('function '+n);return src.slice(i,src.indexOf('\nfunction ',i+10))};
  for(const n of ['printCashReport','exportCash','receiptHtml'])assert.doesNotMatch(body(n),/\.obs\b/,n+' não usa a observação')});
 test('início da gestão não traz aviso de parceiros a cobrar',()=>{const f=fixture();f.run(`adm=[{id:'a',kind:'parceiro',data:{name:'FASES',type:'parceiro',since:'2020-01'}}];db.users[0].role='gestor'`);assert.doesNotMatch(f.run('gHome()'),/a cobrar/)});
+test('pagamento vai para o mês da data: mudar a data para dezembro leva o pagamento para dezembro',()=>{const f=fixture();f.run(`adm=[{id:'cx',kind:'caixa',data:{name:'Adm',teams:[{id:'t',name:'Geral',amount:500}]}},{id:'p',kind:'pagamento',data:{caixa:'cx',team:'t',month:'2026-11',date:'2026-12-03',recipient:'Ana',value:50,action:'x'}},{id:'q',kind:'pagamento',data:{caixa:'cx',team:'t',month:'2026-11',recipient:'Sem data',value:10,action:'y'}}]`);
+ assert.deepEqual(JSON.parse(f.run(`JSON.stringify([paysOf('cx','2026-11').map(p=>p.id),paysOf('cx','2026-12').map(p=>p.id)])`)),[['q'],['p']]);
+ assert.equal(f.run(`cashSummary(admById('cx'),'2026-12').spent`),50)});
