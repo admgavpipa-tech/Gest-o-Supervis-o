@@ -392,3 +392,13 @@ body.privacy::after{content:'Volte para o app para continuar';position:fixed;ins
 @media(max-width:700px){.shift-split{grid-template-columns:1fr}}
 .field .money-in,.team-row .money-in,.money-in{display:flex;flex-direction:row;margin:0;font-size:14px;letter-spacing:0;text-transform:none;align-items:center;border:1px solid var(--line);border-radius:10px;background:#fff;min-width:0}.money-in:focus-within{border-color:var(--navy,#1f3a5f);box-shadow:0 0 0 3px rgba(31,58,95,.12)}.field .money-in b,.money-in b{margin:0;flex:none;padding-left:12px;color:var(--muted,#6b6b6b);font-weight:600;font-size:14px}.field .money-in input,.team-row .money-in input{border:0!important;box-shadow:none!important;outline:0;background:transparent;padding:11px 12px 11px 6px;font:inherit;font-size:14px;min-width:0;width:100%}
 .team-row{grid-template-columns:1fr 150px auto}@media(max-width:560px){.team-row{grid-template-columns:1fr 130px auto}}
+/* Concluir chamado */
+.done-check{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;margin:12px 0 4px;padding:10px 14px;border:1.5px dashed #c9cfdb;border-radius:14px;background:#f7f8fb;color:var(--navy,#1f3a5f);font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .2s,border-color .2s,transform .1s}
+.done-check:hover{border-color:#3f9a6e;background:#f1f8f4}.done-check:active{transform:scale(.98)}.done-check:focus-visible{outline:3px solid rgba(63,154,110,.35);outline-offset:2px}
+.dc-box{flex:none;display:grid;place-items:center;width:30px;height:30px;border:2px solid #9aa3b5;border-radius:9px;background:#fff;transition:background .2s,border-color .2s}
+.dc-box svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset .3s .1s ease-out}
+.dc-text{display:flex;flex-direction:column;min-width:0}.dc-text strong{font-size:15px}.dc-text small{font-size:12px;color:var(--muted,#6b7280)}
+.done-check.is-on{border-style:solid;border-color:#3f9a6e;background:#eaf6ef;color:#23704c}.done-check.is-on .dc-box{background:#3f9a6e;border-color:#3f9a6e}.done-check.is-on .dc-box svg{stroke-dashoffset:0}
+.done-check.pop .dc-box{animation:dc-pop .45s ease-out}@keyframes dc-pop{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
+.done-check[disabled]{cursor:default}
+@media(prefers-reduced-motion:reduce){.done-check.pop .dc-box{animation:none}.dc-box svg{transition:none}}
