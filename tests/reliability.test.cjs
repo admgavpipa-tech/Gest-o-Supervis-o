@@ -187,3 +187,4 @@ test('observação do pagamento é opcional e não sai no recibo, no relatório 
  assert.match(f.run('oCash()'),/OBS-SECRETA-123/);assert.doesNotMatch(f.run(`receiptHtml(adm[1])`),/OBS-SECRETA/);
  const src=require('fs').readFileSync(require('path').join(__dirname,'..','admin.js'),'utf8'),body=n=>{const i=src.indexOf('function '+n);return src.slice(i,src.indexOf('\nfunction ',i+10))};
  for(const n of ['printCashReport','exportCash','receiptHtml'])assert.doesNotMatch(body(n),/\.obs\b/,n+' não usa a observação')});
+test('início da gestão não traz aviso de parceiros a cobrar',()=>{const f=fixture();f.run(`adm=[{id:'a',kind:'parceiro',data:{name:'FASES',type:'parceiro',since:'2020-01'}}];db.users[0].role='gestor'`);assert.doesNotMatch(f.run('gHome()'),/a cobrar/)});

@@ -380,7 +380,6 @@ function homeInbox(){const d=today(),h=spHour(),items=[],add=(tone,area,ic,title
   if(oo.length)add('warn','Administrativo','truck',`${plural(oo.length,'pedido com pendência','pedidos com pendência')}`,oo.map(o=>o.data.issues).join(' · ').slice(0,90),'o-orders');
   const nt=newTickets();if(nt.length)add('info','Administrativo · Chamados','ticket',`${plural(nt.length,'chamado novo','chamados novos')}`,nt.slice(0,2).map(x=>`#${String(x.data.number).replace(/^#/,'')} ${x.data.description||''}`.slice(0,60)).join(' · '),'o-tickets');
   const pl=pontualLate(),lt=al.length+pl.length;if(lt)add('warn','Administrativo','tasks',`${plural(lt,'tarefa do administrativo atrasada','tarefas do administrativo atrasadas')}`,[...new Set([...al.map(x=>x.t.data.title),...pl.map(t=>t.data.title)])].slice(0,2).join(' · '),'o-tasks');
-  if(Number(d.slice(8))>=10){const nc=[...noteCharges('parceiro',m),...noteCharges('alimentacao',m)];if(nc.length)add('info','Administrativo','receipt',`${plural(nc.length,'parceiro com nota ou voucher a cobrar','parceiros com nota ou voucher a cobrar')}`,nc.slice(0,3).map(x=>x.p.data.name).join(' · '),'o-notes')}
   if(neg.length)add('late','Caixas','wallet','Saldo negativo no caixa',neg.join(' · '),'o-cash');
   const up=unpaidPays();if(up.length)add('warn','Administrativo · Caixas','wallet',`${plural(up.length,'pagamento aguardando','pagamentos aguardando')} a sua transferência`,`${brl(up.reduce((a,p)=>a+Number(p.data.value||0),0))} · ${up.slice(0,2).map(p=>p.data.recipient).join(', ')}`,'o-cash')}
  return items}
