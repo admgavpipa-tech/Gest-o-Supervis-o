@@ -231,7 +231,7 @@ const noteLabel=(n,i,total)=>total>1?(n.data.number?`nota nº ${n.data.number}`:
 const pendingPartners=(m=today().slice(0,7))=>NOTE_TYPES.flatMap(([t])=>partnersIn(t,m).filter(p=>{const x=partnerMonth(p,m,t);return x.pending||x.problem}));
 function noteStatus(n){const s=n?.data.steps||{},pill=(ok,cls,txt)=>`<span class="step-pill${cls}">${ok?icon('check'):''}${txt}</span>`,d=x=>x?' '+shortDate(x):'';
  if(noteNone(n))return pill(false,' muted-pill','Sem nota no mês');
- return [noteNone(n)?pill(false,' muted-pill','Sem nota no mês'):noteProblem(n)?pill(false,' warn-pill','Nota com problema'):pill(!!s.recebida?.date,s.recebida?.date?' ok':' bad',s.recebida?.date?`Nota${d(s.recebida.date)}`:'Pendente de receber'),voucherMissing(n)?pill(false,' bad','Voucher não entregue'):pill(!!s.vouchers?.date,s.vouchers?.date?' ok':'',`Vouchers${d(s.vouchers?.date)}`),pill(!!s.zeev?.date,s.zeev?.date?' ok':'',s.zeev?.date?`Lançada${d(s.zeev.date)}`:'Lançamento no Zeev'),s.pagamento?.date?pill(!!s.pagamento.done,s.pagamento.done?' ok':'',s.pagamento.done?`Pago${d(s.pagamento.date)}`:`Pagar${d(s.pagamento.date)}`):''].join('')}
+ return [noteNone(n)?pill(false,' muted-pill','Sem nota no mês'):noteProblem(n)?pill(false,' warn-pill','Nota com problema'):pill(!!s.recebida?.date,s.recebida?.date?' ok':' bad',s.recebida?.date?`Nota${d(s.recebida.date)}`:'Pendente de receber'),voucherMissing(n)?pill(false,' bad','Voucher não entregue'):pill(!!s.vouchers?.date,s.vouchers?.date?' ok':'',`Vouchers${d(s.vouchers?.date)}${s.vouchers?.file?' · PDF':''}`),pill(!!s.zeev?.date,s.zeev?.date?' ok':'',s.zeev?.date?`Lançada${d(s.zeev.date)}`:'Lançamento no Zeev'),s.pagamento?.date?pill(!!s.pagamento.done,s.pagamento.done?' ok':'',s.pagamento.done?`Pago${d(s.pagamento.date)}`:`Pagar${d(s.pagamento.date)}`):''].join('')}
 // O que falta cobrar no mês: nota ainda pendente ou voucher sem baixa (inclusive o marcado como não entregue).
 function noteCharges(t,m){return partnersIn(t,m).filter(p=>partnerInMonth(p,m)).map(p=>{const x=partnerMonth(p,m,t),miss=[];if(x.none)return {p,miss};if(!x.real.length){miss.push('nota fiscal');miss.push('voucher');return {p,miss}}
  x.real.forEach((n,i)=>{const s=n.data.steps||{},lb=noteLabel(n,i,x.real.length),of=x.real.length>1?` (${lb})`:'';if(notePending(n))miss.push('nota fiscal'+of);if(noteProblem(n))miss.push(`correção da ${lb} (${n.data.problem.text||'problema na nota'})`);if(voucherMissing(n))miss.push(`voucher${of} (não entregou${s.vouchers.reason?': '+s.vouchers.reason:''})`);else if(!s.vouchers?.date)miss.push('voucher'+of)});return {p,miss}}).filter(x=>x.miss.length)}
@@ -253,24 +253,38 @@ function oNotes(){const t=view.noteType||'parceiro',m=view.noteMonth||today().sl
  <div class="adm-list">${ps.map(p=>noteGroup(p,t,m)).join('')}</div>`
  :`<div class="empty">${icon('users')}Nenhum ${t==='parceiro'?'parceiro':'fornecedor de alimentação PJ'} neste mês. Toque em “Parceiros” para cadastrar.</div>`}`}
 // Etapa da nota: marca com um toque; a data (hoje) aparece só depois de marcar e pode ser trocada.
-const nStep=(k,label,date)=>`<div class="nstep${date?' on':''}"><label class="nstep-head"><input type="checkbox" data-step="${k}" ${date?'checked':''}><span class="dc-box" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><strong>${label}</strong></label><input type="date" name="${k}" value="${esc(date||'')}" aria-label="Data: ${label}" ${date?'':'hidden'}></div>`;
+const nStep=(k,label,date,extra='')=>`<div class="nstep${date?' on':''}"><label class="nstep-head"><input type="checkbox" data-step="${k}" ${date?'checked':''}><span class="dc-box" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><strong>${label}</strong></label><input type="date" name="${k}" value="${esc(date||'')}" aria-label="Data: ${label}" ${date?'':'hidden'}>${extra}</div>`;
+// Arquivo da baixa dos vouchers (PDF ou foto): vai para o armazenamento privado "vouchers" assim que é escolhido.
+const VFILE_MAX=10*1024*1024,VFILE_TYPES=['application/pdf','image/jpeg','image/png','image/webp'];
+const vfileHtml=f=>`<div class="vfile"><input type="hidden" name="voucherFile" value="${esc(f?JSON.stringify(f):'')}">${f?`<button type="button" class="vfile-chip" data-action="adm-vfile-open" data-path="${esc(f.path)}">${icon('note')}<span>${esc(f.name||'baixa.pdf')}</span></button><button type="button" class="link-btn" data-action="adm-vfile-clear">remover</button>`:`<label class="vfile-add">${icon('upload')}<span>Anexar PDF da baixa</span><input type="file" accept="application/pdf,image/*" data-vfile-input hidden></label>`}</div>`;
+async function uploadVoucher(input){const file=input.files?.[0],box=input.closest('.vfile'),form=input.closest('form');if(!file||!box||!form)return;
+ if(!VFILE_TYPES.includes(file.type)){toast('Envie um PDF ou uma foto.');input.value='';return}if(file.size>VFILE_MAX){toast('Arquivo muito grande (máximo 10 MB).');input.value='';return}
+ const lab=box.querySelector('.vfile-add span');if(lab)lab.textContent='Enviando…';const ext=file.type==='application/pdf'?'pdf':file.type.split('/')[1].replace('jpeg','jpg'),path=`${form.dataset.partner}/${form.dataset.month}/${crypto.randomUUID()}.${ext}`;
+ const {error}=await sb.storage.from('vouchers').upload(path,file,{contentType:file.type,upsert:false});
+ if(error){if(lab)lab.textContent='Anexar PDF da baixa';input.value='';toast(/bucket|not found|row-level/i.test(error.message)?'Falta atualizar o banco: execute supabase/administrativo.sql.':'Não foi possível enviar o arquivo. Tente de novo.');return}
+ box.outerHTML=vfileHtml({path,name:file.name.slice(0,120),size:file.size,at:new Date().toISOString(),by:me().name})}
+async function openVoucher(path){const w=window.open('','_blank');const {data,error}=await sb.storage.from('vouchers').createSignedUrl(path,300);if(error||!data?.signedUrl){w?.close();toast('Não foi possível abrir o arquivo.');return}if(w)w.location.href=data.signedUrl;else location.href=data.signedUrl}
 document.addEventListener('change',e=>{const c=e.target;if(!(c instanceof HTMLInputElement))return;
+ if(c.hasAttribute('data-vfile-input')){uploadVoucher(c);return}
+ if(c.hasAttribute('data-none')){const f=c.closest('form');f.querySelector('.note-body').hidden=c.checked;const r=f.querySelector('.none-reason');if(r)r.hidden=!c.checked}
  if(c.dataset.step){const box=c.closest('.nstep'),d=box.querySelector('input[type=date]');box.classList.toggle('on',c.checked);d.hidden=!c.checked;d.value=c.checked?(d.value||today()):''}
  if(c.dataset.reveal){const el=document.getElementById(c.dataset.reveal);if(el)el.hidden=!c.checked}});
 function noteDialog(partnerId,t,noteId,isNew){const p=admById(partnerId);t=t||partnerTypes(p)[0];const m=view.noteMonth||today().slice(0,7),all=notesOf(partnerId,m,t),n=isNew?null:(noteId&&admById(noteId))||all[0],pos=n?all.indexOf(n):all.length,total=Math.max(all.length,pos+1),others=all.filter(x=>x!==n),d=n?.data||{steps:{}},s=d.steps||{},log=(d.log||[]).slice().reverse();
  openModal(modalHead(esc(p?.data.name||'Nota'))+`<p class="subtitle">${monthLabel(m)} · ${t==='alimentacao'?'Alimentação PJ':'Parceiro'}${total>1?` · ${pos+1}ª nota do mês`:''}</p><form id="adm-form" data-kind="nota" data-id="${n?.id||''}" data-partner="${partnerId}" data-type="${t}" data-month="${m}" autocomplete="off">
- <div class="nsteps">${nStep('recebida','Nota recebida',s.recebida?.date)}${nStep('vouchers','Baixa nos vouchers',s.vouchers?.date)}${nStep('zeev','Lançada no Zeev',s.zeev?.date)}</div>
- <details class="nmore"${noteProblem(n)||s.recebida?.none?' open':''}><summary>Algum problema?<small>nota com problema${others.length?'':' · sem nota'}</small></summary>
+ ${others.length?'':`<label class="none-switch"><input type="checkbox" name="noteNone" data-none ${s.recebida?.none?'checked':''}><span class="sw" aria-hidden="true"></span><span class="grow"><strong>Sem nota este mês</strong><small>O parceiro não manda nota neste mês. Sai dos pendentes e da cobrança.</small></span></label>
+ <label class="field none-reason" ${s.recebida?.none?'':'hidden'}><span>Motivo <em>(opcional)</em></span><input name="voucherReason" maxlength="200" value="${esc(s.recebida?.reason||'')}" placeholder="Ex.: sem movimento no mês"></label>`}
+ <div class="note-body" ${s.recebida?.none?'hidden':''}>
+ <div class="nsteps">${nStep('recebida','Nota recebida',s.recebida?.date)}${nStep('vouchers','Baixa nos vouchers',s.vouchers?.date,vfileHtml(s.vouchers?.file))}${nStep('zeev','Lançada no Zeev',s.zeev?.date)}</div>
+ <details class="nmore"${noteProblem(n)?' open':''}><summary>Algum problema?<small>nota com problema</small></summary>
   <label class="check-row"><input type="checkbox" name="problem" data-reveal="problemBox" ${noteProblem(n)?'checked':''}><span>Nota com problema<small>Fica pendente até desmarcar.</small></span></label>
   <label class="field" id="problemBox" ${noteProblem(n)?'':'hidden'}><span>Qual o problema?</span><input name="problemText" maxlength="300" value="${esc(d.problem?.text||'')}" placeholder="Ex.: valor errado"></label>
-  ${others.length?'':`<label class="check-row"><input type="checkbox" name="noteNone" ${s.recebida?.none?'checked':''}><span>Sem nota este mês</span></label>`}
-  <label class="field"><span>Motivo <em>(opcional)</em></span><input name="voucherReason" maxlength="200" value="${esc(s.vouchers?.reason||s.recebida?.reason||'')}"></label>
- </details>
+  </details>
  <details class="nmore"${d.number||d.value||s.pagamento?.date||d.obs?' open':''}><summary>Mais detalhes<small>nº, valor, pagamento, observação</small></summary>
   <div class="field-grid"><label class="field"><span>Nº da nota</span><input name="number" maxlength="40" value="${esc(d.number||'')}"></label>${moneyInput('value',d.value,'Valor',false)}</div>
   <div class="field-grid">${dateInput('pagamento',s.pagamento?.date,'Pagamento previsto')}<label class="check-row nm-paid"><input type="checkbox" name="paid" ${s.pagamento?.done?'checked':''}><span>Pagamento efetivado</span></label></div>
   <label class="field"><span>Observação</span><textarea name="obs" rows="2" maxlength="500">${esc(d.obs||'')}</textarea></label>
  </details>
+ </div>
  <p class="form-error" role="alert"></p><button class="button" type="submit">Salvar</button></form>
  ${log.length?`<div class="section-title"><h2>Histórico</h2><small>${log.length}</small></div><div class="history">${log.map(h=>`<p><span>${esc(h.text)}</span><small>${esc(h.by)} · ${dateBR(h.at)} às ${timeOf(h.at)}</small></p>`).join('')}</div>`:''}
  ${n&&(isManager()||n.created_by===authId)?`<button class="small-link danger-text" data-action="adm-note-del" data-id="${n.id}">${total>1?'Apagar esta nota':'Apagar o registro deste mês'}</button>`:''}`)}
@@ -422,6 +436,8 @@ async function admAction(a,b){const id=b.dataset.id,x=id&&admById(id);
  if(a==='adm-ticket-copy'){if(!ticketsOpen().length){toast('Nenhum chamado em aberto para copiar.');return}const ok=await copyText(ticketCopyText());toast(ok?'Lista de chamados copiada. É só colar.':'Não foi possível copiar neste aparelho.');return}
  if(a==='adm-note-type'){view.noteType=b.dataset.type;render();return}
  if(a==='adm-note-month'){view.noteMonth=shiftMonth(view.noteMonth||today().slice(0,7),Number(b.dataset.step));render();return}
+ if(a==='adm-vfile-open')return openVoucher(b.dataset.path);
+ if(a==='adm-vfile-clear'){const box=b.closest('.vfile');if(box)box.outerHTML=vfileHtml(null);return}
  if(a==='adm-note')return noteDialog(b.dataset.partner,b.dataset.type,b.dataset.note);if(a==='adm-note-new')return noteDialog(b.dataset.partner,b.dataset.type,null,true);
  if(a==='adm-note-charge'){const t=view.noteType||'parceiro',m=view.noteMonth||today().slice(0,7);const ok=await copyText(chargeText(t,m));toast(ok?'Cobrança copiada. É só colar.':'Não foi possível copiar neste aparelho.');return}
  if(a==='adm-note-del'&&x)return confirmDialog('Apagar esta nota?','As datas e o histórico desta nota serão apagados.','Apagar',async()=>{if(await admRemove(x.id)){closeModal();render()}});
@@ -471,18 +487,20 @@ async function admSubmit(form,f,err){const kind=form.dataset.kind,id=form.datase
   lock(true);const ok=await admSave('parceiro',{...(x?.data||{}),name:str('name'),type:types[0],types,info:str('info'),since,inactiveFrom:out,active:!out||out>today().slice(0,7)},id);lock(false);if(ok)done(id?'Cadastro atualizado.':'Parceiro cadastrado.');return}
  if(kind==='nota'){const old=x?.data.steps||{},steps={},who=me().name,v=str('value')?parseMoney(str('value')):null,labels={recebida:'Nota recebida',vouchers:'Baixa nos vouchers',zeev:'Lançada no Zeev',pagamento:'Pagamento'};if(str('value')&&!Number.isFinite(v))return err('Valor inválido.');
   for(const [k] of NOTE_STEPS){const date=str(k)||null,prev=old[k]||{};steps[k]=date?{date,by:prev.date===date&&prev.by?prev.by:who}:null;if(k==='pagamento'&&steps[k])steps[k].done=f.get('paid')==='on'}
-  if(f.get('noteNone')==='on'&&!steps.recebida)steps.recebida={none:true,reason:str('voucherReason'),by:old.recebida?.none?old.recebida.by:who};
-  if(f.get('voucherMissing')==='on'&&!steps.vouchers)steps.vouchers={missing:true,reason:str('voucherReason'),by:old.vouchers?.missing?old.vouchers.by:who};else if(steps.vouchers&&str('voucherReason'))steps.vouchers.reason=str('voucherReason');
+  const isNone=f.get('noteNone')==='on';if(isNone){for(const [k] of NOTE_STEPS)steps[k]=null;steps.recebida={none:true,reason:str('voucherReason'),by:old.recebida?.none?old.recebida.by:who}}
+  let vf=null;try{vf=str('voucherFile')?JSON.parse(str('voucherFile')):null}catch(e){vf=null}if(steps.vouchers&&vf)steps.vouchers.file=vf;
   if(f.get('paid')==='on'&&!steps.pagamento)return err('Informe a data do pagamento.');
   // Histórico: o que mudou, por quem e quando.
   const ch=[];if(!x)ch.push('Registro criado');for(const [k] of NOTE_STEPS){const a0=old[k]?.date||null,b0=steps[k]?.date||null;if(a0!==b0)ch.push(b0?`${labels[k]}${k==='pagamento'?' prevista':''}: ${dateBR(b0)}`:`${labels[k]}: data removida`)}
   if(!old.pagamento?.done&&steps.pagamento?.done)ch.push('Pagamento efetivado');if(old.pagamento?.done&&!steps.pagamento?.done)ch.push('Pagamento desmarcado');
   if(!old.vouchers?.missing&&steps.vouchers?.missing)ch.push(`Parceiro não entregou voucher${steps.vouchers.reason?' ('+steps.vouchers.reason+')':''}`);if(old.vouchers?.missing&&!steps.vouchers?.missing)ch.push('Voucher regularizado');if(!old.recebida?.none&&steps.recebida?.none)ch.push(`Sem nota este mês${steps.recebida.reason?' ('+steps.recebida.reason+')':''}`);if(old.recebida?.none&&!steps.recebida?.none)ch.push('Saiu de “sem nota”');
   if(x&&(String(x.data.number||'')!==str('number')||(x.data.value??null)!==v))ch.push(`Dados da nota: ${str('number')?'nº '+str('number'):'sem número'}${v?' · '+brl(v):''}`);if(x&&(x.data.obs||'')!==str('obs'))ch.push('Observação alterada');
-  const probOn=f.get('problem')==='on',probText=str('problemText'),oldProb=x?.data.problem||null;if(probOn&&!probText)return err('Descreva o problema da nota.');
+  const probOn=f.get('problem')==='on'&&!isNone,probText=str('problemText'),oldProb=x?.data.problem||null;if(probOn&&!probText)return err('Descreva o problema da nota.');
   const problem=probOn?{text:probText,by:oldProb&&!oldProb.resolved?oldProb.by:who,at:oldProb&&!oldProb.resolved?oldProb.at:new Date().toISOString()}:oldProb&&!oldProb.resolved?{...oldProb,resolved:true,resolvedBy:who,resolvedAt:new Date().toISOString()}:oldProb;
   if(probOn&&(!oldProb||oldProb.resolved))ch.push(`Nota com problema: ${probText}`);else if(probOn&&oldProb.text!==probText)ch.push(`Problema atualizado: ${probText}`);if(!probOn&&oldProb&&!oldProb.resolved)ch.push('Problema da nota resolvido');
+  const oldF=old.vouchers?.file?.path||null,newF=steps.vouchers?.file?.path||null;if(oldF!==newF)ch.push(newF?'PDF da baixa dos vouchers anexado':'PDF da baixa dos vouchers removido');
   const log=[...(x?.data.log||[]),...(ch.length?[{at:new Date().toISOString(),by:who,text:ch.join(' · ')}]:[])];
+  if(oldF&&oldF!==newF)sb.storage.from('vouchers').remove([oldF]).catch(()=>{});
   lock(true);const ok=await admSave('nota',{partner:form.dataset.partner,month:form.dataset.month,type:form.dataset.type||partnerTypes(admById(form.dataset.partner))[0],number:str('number'),value:v,obs:str('obs'),steps,log,problem},id);lock(false);if(ok)done(ch.length?'Nota atualizada.':'Nada mudou.');return}
  if(kind==='pedido'){if(!str('supplier'))return err('Informe o fornecedor.');if(!/^\d{4}-\d{2}$/.test(str('month')))return err('Informe o mês do pedido.');const status=str('status');if(!status)return err('Marque a conferência.');if(status==='nao_conforme'&&!str('issues'))return err('Descreva o que faltou ou veio errado.');
   const arrived=str('arrivedAt')||null,withInv=str('invoiceWith')==='sim',nd={month:str('month'),supplier:str('supplier'),title:'',arrivedAt:arrived,invoiceWith:withInv?'sim':'nao',invoiceAt:withInv?arrived:(x?.data.invoiceWith==='sim'?null:x?.data.invoiceAt||null),status,issues:str('issues')},ch=[];

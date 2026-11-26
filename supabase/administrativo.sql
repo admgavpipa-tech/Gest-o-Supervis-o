@@ -228,6 +228,17 @@ create policy "fotos: leitura" on storage.objects for select to authenticated us
 drop policy if exists "fotos: envio pela equipe" on storage.objects;
 create policy "fotos: envio pela equipe" on storage.objects for insert to authenticated
   with check (bucket_id = 'fotos' and public.gav_cleaning() and split_part(name, '/', 1) = auth.uid()::text);
+-- Arquivo da baixa dos vouchers (PDF ou foto), privado: só quem tem acesso às notas (e a gestão) vê e envia.
+insert into storage.buckets(id, name, public) values ('vouchers', 'vouchers', false) on conflict (id) do update set public = false;
+do $$ begin
+  update storage.buckets set file_size_limit = 10485760, allowed_mime_types = array['application/pdf','image/jpeg','image/png','image/webp'] where id = 'vouchers';
+exception when undefined_column then null; end $$;
+drop policy if exists "vouchers: leitura" on storage.objects;
+create policy "vouchers: leitura" on storage.objects for select to authenticated using (bucket_id = 'vouchers' and public.gav_adm_can('nota', false));
+drop policy if exists "vouchers: envio" on storage.objects;
+create policy "vouchers: envio" on storage.objects for insert to authenticated with check (bucket_id = 'vouchers' and public.gav_adm_can('nota', true));
+drop policy if exists "vouchers: exclusão" on storage.objects;
+create policy "vouchers: exclusão" on storage.objects for delete to authenticated using (bucket_id = 'vouchers' and public.gav_adm_can('nota', true));
 -- Primeiro gestor automático só enquanto não existir nenhuma gestão ativa (evita que alguém assuma esse e-mail depois).
 create or replace function public.gav_first_manager() returns trigger
 language plpgsql security definer set search_path = public as $$
