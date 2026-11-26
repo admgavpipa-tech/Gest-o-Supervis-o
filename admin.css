@@ -402,3 +402,5 @@ body.privacy::after{content:'Volte para o app para continuar';position:fixed;ins
 .done-check.pop .dc-box{animation:dc-pop .45s ease-out}@keyframes dc-pop{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
 .done-check[disabled]{cursor:default}
 @media(prefers-reduced-motion:reduce){.done-check.pop .dc-box{animation:none}.dc-box svg{transition:none}}
+.charge-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px;padding:10px 12px 10px 14px;border:1px solid #f0d9b5;border-left:4px solid #e0a526;border-radius:12px;background:#fffaf0;font-size:14px}.charge-bar svg{flex:none;width:18px;height:18px;color:#b07d12}.charge-bar.ok{border-color:#cfe8da;border-left-color:#3f9a6e;background:#f3faf6}.charge-bar.ok svg{color:#3f9a6e}.charge-bar .grow{flex:1;min-width:160px}
+@media(max-width:560px){.charge-bar .button{width:100%;justify-content:center}}
