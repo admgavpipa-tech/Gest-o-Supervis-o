@@ -636,6 +636,9 @@ create table if not exists public.adm_items(
   updated_at timestamptz not null default now()
 );
 create index if not exists adm_items_kind_idx on public.adm_items(kind, created_at);
+--   tarefa_transf: tarefa do dia passada de uma pessoa para outra (atestado, folga). Não muda o cadastro da tarefa.
+alter table public.adm_items drop constraint if exists adm_items_kind_check;
+alter table public.adm_items add constraint adm_items_kind_check check (kind in ('tarefa','tarefa_feita','tarefa_transf','chamado','parceiro','nota','pedido','caixa','pagamento','contrato'));
 
 -- Funções de cada pessoa do administrativo. Vazio (null) = padrão da função:
 -- analista: notas, pedidos e caixas; assistente de contratos: contratos e chamados. A gestão pode liberar outras.
@@ -660,6 +663,7 @@ language sql stable security definer set search_path = public as $$
   select case when public.is_manager() then true when not public.gav_adm_office() then false else coalesce((select case p_kind
     when 'tarefa' then not p_write
     when 'tarefa_feita' then true
+    when 'tarefa_transf' then true
     when 'chamado' then 'chamados' = any(m)
     when 'contrato' then 'contratos' = any(m)
     when 'parceiro' then 'notas' = any(m)
@@ -677,6 +681,20 @@ language sql stable security definer set search_path = public as $$
   select exists(select 1 from adm_items where id::text = p_task and kind = 'tarefa' and (data->'assignees' ? auth.uid()::text or created_by = auth.uid())) $$;
 revoke all on function public.gav_adm_task_mine(text) from public, anon;
 grant execute on function public.gav_adm_task_mine(text) to authenticated;
+
+-- Tarefa da equipe do administrativo: tem alguém do administrativo entre os responsáveis.
+-- As assistentes veem as tarefas umas das outras, concluem e transferem no dia (atestado, folga), mas não criam tarefa para outra pessoa.
+create or replace function public.gav_adm_office_assigned(p_data jsonb) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists(select 1 from jsonb_array_elements_text(case when jsonb_typeof(p_data->'assignees') = 'array' then p_data->'assignees' else '[]'::jsonb end) a
+    join profiles p on p.id::text = a where p.role in ('contratos','analista')) $$;
+revoke all on function public.gav_adm_office_assigned(jsonb) from public, anon;
+grant execute on function public.gav_adm_office_assigned(jsonb) to authenticated;
+create or replace function public.gav_adm_task_office(p_task text) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists(select 1 from adm_items where id::text = p_task and kind = 'tarefa' and public.gav_adm_office_assigned(data)) $$;
+revoke all on function public.gav_adm_task_office(text) from public, anon;
+grant execute on function public.gav_adm_task_office(text) to authenticated;
 
 -- Autoria e horário gravados pelo servidor.
 create or replace function public.gav_adm_stamp() returns trigger
@@ -701,20 +719,22 @@ grant select, insert, update, delete on public.adm_items to authenticated;
 drop policy if exists "adm: leitura" on public.adm_items;
 create policy "adm: leitura" on public.adm_items for select to authenticated using (
   public.gav_adm_can(kind, false) and (public.is_manager() or kind not in ('tarefa','tarefa_feita')
-    or (kind = 'tarefa' and (data->'assignees' ? auth.uid()::text or created_by = auth.uid()))
-    or (kind = 'tarefa_feita' and (created_by = auth.uid() or public.gav_adm_task_mine(data->>'task')))));
+    or (kind = 'tarefa' and (data->'assignees' ? auth.uid()::text or created_by = auth.uid() or (public.gav_adm_office() and public.gav_adm_office_assigned(data))))
+    or (kind = 'tarefa_feita' and (created_by = auth.uid() or public.gav_adm_task_mine(data->>'task') or (public.gav_adm_office() and public.gav_adm_task_office(data->>'task'))))));
 drop policy if exists "adm: inclusão" on public.adm_items;
 create policy "adm: inclusão" on public.adm_items for insert to authenticated with check (
-  (public.gav_adm_can(kind, true) and (kind <> 'tarefa_feita' or public.is_manager() or public.gav_adm_task_mine(data->>'task')))
+  (public.gav_adm_can(kind, true)
+    and (kind <> 'tarefa_feita' or public.is_manager() or public.gav_adm_task_mine(data->>'task') or public.gav_adm_task_office(data->>'task'))
+    and (kind <> 'tarefa_transf' or public.is_manager() or public.gav_adm_task_office(data->>'task')))
   or (kind = 'tarefa' and public.gav_adm_office() and data->'assignees' = jsonb_build_array(auth.uid()::text)));
 drop policy if exists "adm: alteração" on public.adm_items;
 create policy "adm: alteração" on public.adm_items for update to authenticated
-  using ((public.gav_adm_can(kind, true) and (kind <> 'tarefa_feita' or created_by = auth.uid() or public.is_manager()))
+  using ((public.gav_adm_can(kind, true) and (kind not in ('tarefa_feita','tarefa_transf') or created_by = auth.uid() or public.is_manager()))
     or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office()))
   with check (public.gav_adm_can(kind, true) or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office() and data->'assignees' = jsonb_build_array(auth.uid()::text)));
 drop policy if exists "adm: exclusão" on public.adm_items;
 create policy "adm: exclusão" on public.adm_items for delete to authenticated
-  using ((public.gav_adm_can(kind, true) and (kind <> 'tarefa_feita' or created_by = auth.uid() or public.is_manager()) and (kind <> 'pagamento' or public.is_manager()))
+  using ((public.gav_adm_can(kind, true) and (kind not in ('tarefa_feita','tarefa_transf') or created_by = auth.uid() or public.is_manager()) and (kind <> 'pagamento' or public.is_manager()))
     or (kind = 'tarefa' and created_by = auth.uid() and public.gav_adm_office()));
 
 do $$ begin alter publication supabase_realtime add table public.adm_items; exception when duplicate_object then null; end $$;

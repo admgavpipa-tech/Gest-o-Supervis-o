@@ -58,6 +58,7 @@ Cada perfil vê só a própria parte; a gestão vê e configura tudo (Setores �
 - Banco: rode `supabase/administrativo.sql` no SQL Editor (depois de `equipe.sql`). Ele cria a tabela `adm_items`, as permissões por perfil.
 
 ## Detalhes recentes
+- **Cronograma em equipe**: as assistentes veem as tarefas do dia umas das outras (Equipe hoje), podem concluir a tarefa da colega e transferir uma tarefa para outra pessoa só naquele dia (a pontual fica com quem recebeu até ser concluída). Não criam tarefa para outra pessoa. Quem transferiu (ou a gestão) pode desfazer.
 
 - **Contagem**: os itens que zeraram na contagem mais recente aparecem para a gestão em “Precisa de você” e no topo de Salão → Contagens, com o botão “Copiar para compras”.
 - **Garçons e print**: a web não consegue bloquear print de tela. A tela da contagem leva uma marca d'água discreta com o nome do garçom, a data e a hora, e o conteúdo fica escondido quando o app sai da frente (lista de apps abertos, troca de janela).

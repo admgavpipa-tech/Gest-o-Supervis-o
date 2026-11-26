@@ -163,3 +163,9 @@ test('parceiro com mais de uma nota no mês: primeira recebida tira da pendênci
  assert.equal(f.run(`noteSummary('parceiro',m).pend`),0,'segunda recebida não volta a pendente');assert.equal(f.run(`noteSummary('parceiro',m).launched`),0,'falta lançar a segunda');
  assert.deepEqual(JSON.parse(f.run(`JSON.stringify(noteCharges('parceiro',m)[0].miss)`)),['voucher (nota nº 11)']);
  const h=f.run('oNotes()');assert.match(h,/nota nº 10/);assert.match(h,/nota nº 11/);assert.equal(f.run(`notesOf('a',m,'parceiro').length`),2)});
+test('transferência: a tarefa vai para a colega só naquele dia (pontual: até concluir)',()=>{const f=fixture();f.run(`var d=today(),am=addDays(d,1);db.users.push({id:'ana',name:'Ana',role:'contratos',active:true},{id:'eli',name:'Elisa',role:'contratos',active:true});authId='ana';
+ adm=[{id:'t1',kind:'tarefa',data:{title:'CHECKLIST',assignees:['ana'],repeat:{type:'daily',every:1},start:d},created_at:d+'T09:00:00Z'},{id:'t2',kind:'tarefa',data:{title:'RELATORIO',mode:'pontual',assignees:['ana']},created_at:d+'T09:00:00Z'},
+ {id:'x1',kind:'tarefa_transf',data:{task:'t1',date:d,from:'ana',to:'eli'},created_at:'1',created_by:'ana',created_by_name:'Ana'},{id:'x2',kind:'tarefa_transf',data:{task:'t2',date:d,from:'ana',to:'eli'},created_at:'2',created_by:'ana',created_by_name:'Ana'}]`);
+ const ids=x=>JSON.parse(f.run(`JSON.stringify(tasksOn(${x}).map(t=>t.id))`));
+ assert.deepEqual(ids(`d,'eli'`),['t1','t2']);assert.deepEqual(ids(`d,'ana'`),[]);assert.deepEqual(ids(`am,'ana'`),['t1'],'amanhã volta para Ana');
+ assert.match(f.run(`admTaskRow(admById('t1'),d,false,'eli')`),/Transferida de Ana/);assert.match(f.run(`admTaskRow(admById('t1'),d,false,'eli')`),/desfazer/)});
