@@ -428,10 +428,10 @@ function printCashReport(){const c=cashes().find(x=>x.id===view.cash)||cashes().
  <footer><span>Gerado por ${esc(me().name)} em ${dateBR(today())} às ${timeOf(new Date().toISOString())}</span><span>Pagamentos cancelados não entram no relatório.</span></footer>
  <div class="no-print"><button onclick="window.print()">Imprimir ou salvar em PDF</button></div><script>window.onload=()=>setTimeout(()=>window.print(),400)<\/script></body></html>`);w.document.close()}
 // Planilha do caixa (.xlsx) no modelo "SPIFF - BASE": moldura azul-marinho, título, equipe, SALA · VALOR LIBERADO ·
-// VALOR UTILIZADO · SOBRA EM CAIXA (saldo corrido, com fórmula) · DATA · FORMA DE USO. Uma aba por equipe quando o caixa é dividido.
+// (coluna EQUIPE no lugar de SALA) VALOR UTILIZADO · SOBRA EM CAIXA (saldo corrido, com fórmula) · DATA · FORMA DE USO. Uma aba por equipe quando o caixa é dividido.
 let excelLib=null;
 function loadExcel(){if(window.ExcelJS)return Promise.resolve(window.ExcelJS);if(!excelLib)excelLib=new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';sc.onload=()=>window.ExcelJS?ok(window.ExcelJS):no(new Error('ExcelJS'));sc.onerror=()=>{excelLib=null;no(new Error('ExcelJS'))};document.head.appendChild(sc)});return excelLib}
-function cashSheet(wb,name,title,section,budget,ps){const ws=wb.addWorksheet(name,{views:[{state:'frozen',xSplit:3,ySplit:5,showGridLines:false}]});
+function cashSheet(wb,name,title,section,budget,ps,team){const ws=wb.addWorksheet(name,{views:[{state:'frozen',xSplit:3,ySplit:5,showGridLines:false}]});
  ws.columns=[3.9,1.88,25.69,23.95,25.96,23.27,23.27,124.84,1.88,3.9].map(width=>({width}));
  const navy={type:'pattern',pattern:'solid',fgColor:{argb:'FF160678'}},gray={type:'pattern',pattern:'solid',fgColor:{argb:'FFF2F2F2'}},white={argb:'FFFFFFFF'},line={style:'thin',color:{argb:'FF595959'}};
  const money='"R$"\\ #,##0.00',font=(o={})=>({name:'Arial',size:11,...o}),mid={horizontal:'center',vertical:'middle'};
@@ -441,11 +441,11 @@ function cashSheet(wb,name,title,section,budget,ps){const ws=wb.addWorksheet(nam
  ws.getRow(1).height=19.5;const t=ws.getCell('B1');t.value=title;t.font=font({size:14,color:white});t.alignment={vertical:'middle'};
  const sec=ws.getCell('C3');sec.value=section;sec.font=font({bold:true});sec.alignment={vertical:'middle'};for(const col of 'CDEFGH')ws.getCell(`C3`.replace('C',col)).border={bottom:line};
  ws.getRow(3).height=15.95;ws.getRow(4).height=4.5;ws.getRow(5).height=15.95;
- ['SALA','VALOR LIBERADO','VALOR UTILIZADO','SOBRA EM CAIXA','DATA','FORMA DE USO'].forEach((h,k)=>{const c=ws.getCell(`${'CDEFGH'[k]}5`);c.value=h;c.fill=navy;c.font=font({color:white});c.alignment=mid});
+ ['EQUIPE','VALOR LIBERADO','VALOR UTILIZADO','SOBRA EM CAIXA','DATA','FORMA DE USO'].forEach((h,k)=>{const c=ws.getCell(`${'CDEFGH'[k]}5`);c.value=h;c.fill=navy;c.font=font({color:white});c.alignment=mid});
  let left=Number(budget||0);
  for(let k=0;k<rows;k++){const r=first+k,p=ps[k],v=p?Number(p.data.value||0):null,[y,mo,d]=String(p?.data.date||'').split('-').map(Number);left=Math.round((left-(v||0))*100)/100;ws.getRow(r).height=79.9;
   const set=(col,val,o={})=>{const c=ws.getCell(`${col}${r}`);if(val!==undefined)c.value=val;c.alignment=o.al||mid;if(o.fmt)c.numFmt=o.fmt;c.font=font(o.font||{});c.border={top:line,bottom:line,...(col==='C'?{left:line}:{}),...(col==='H'?{right:line}:{})};return c};
-  set('C',section);set('D',k===0?Number(budget||0):null,{fmt:money});set('E',v,{fmt:money});
+  set('C',team||section);set('D',k===0?Number(budget||0):null,{fmt:money});set('E',v,{fmt:money});
   set('F',{formula:k===0?`IF(E${r}="","",D${r}-E${r})`:`IF(E${r}="","",F${r-1}-E${r})`,result:v==null?'':left},{fmt:money});
   set('G',y?new Date(Date.UTC(y,mo-1,d)):null,{fmt:'dd/mm/yyyy'});
   set('H',p?`${String(p.data.recipient||'').toUpperCase()}${p.data.action?' — '+String(p.data.action).toUpperCase():''}`:null,{al:{horizontal:'left',vertical:'middle',wrapText:true},font:{size:10}})}
@@ -458,7 +458,7 @@ async function exportCash(){const c=cashes().find(x=>x.id===view.cash)||cashes()
  const wb=new X.Workbook();wb.creator='GAV Gestão';wb.created=new Date();
  const parts=tf?[tf]:teams.length>1?teams:[null],used=new Set();
  for(const t of parts){let nm=sheetName(t?t.name:c.data.name);while(used.has(nm))nm=nm.slice(0,28)+' '+(used.size+1);used.add(nm);
-  cashSheet(wb,nm,`${String(c.data.name).toUpperCase()} · ${mes} ${y}`,String(t&&teams.length>1?t.name:(t?.name&&t.name.toLowerCase()!=='geral'?t.name:c.data.name)).toUpperCase(),t?t.amount:s.budget,asc(t?s.ps.filter(p=>p.data.team===t.id):s.ps))}
+  cashSheet(wb,nm,`${String(c.data.name).toUpperCase()} · ${mes} ${y}`,String(t&&teams.length>1?t.name:(t?.name&&t.name.toLowerCase()!=='geral'?t.name:c.data.name)).toUpperCase(),t?t.amount:s.budget,asc(t?s.ps.filter(p=>p.data.team===t.id):s.ps),String(t?.name||c.data.name).toUpperCase())}
  const buf=await wb.xlsx.writeBuffer(),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
  a.download=`${String(c.data.name).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}${tf?'-'+String(tf.name).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-'):''}-${m}.xlsx`;
  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},800);toast('Planilha exportada.')}
