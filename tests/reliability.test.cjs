@@ -149,3 +149,7 @@ test('parceiro dos dois tipos: aparece em parceiros e em alimentação PJ, com n
  assert.deepEqual(JSON.parse(f.run(`JSON.stringify([partnersOf('parceiro').map(p=>p.id),partnersOf('alimentacao').map(p=>p.id)])`)),[['a'],['a','b']]);
  assert.equal(f.run(`notePending(noteOf('a',m,'parceiro'))`),false,'nota de parceiro recebida');assert.equal(f.run(`notePending(noteOf('a',m,'alimentacao'))`),true,'a de alimentação continua pendente');
  assert.equal(f.run(`noteCharges('alimentacao',m).length`),2);assert.equal(f.run(`noteCharges('parceiro',m).filter(x=>x.miss.includes('nota fiscal')).length`),0)});
+test('CPF e CNPJ ganham pontos, barra e traço automaticamente',()=>{const f=fixture();const m=v=>f.run(`docMask(${JSON.stringify(v)})`);
+ assert.equal(m('12345678901'),'123.456.789-01');assert.equal(m('40831644001703'),'40.831.644/0017-03');assert.equal(m('123.456.789-01'),'123.456.789-01');
+ assert.equal(m('1234'),'123.4');assert.equal(m('1234567'),'123.456.7');assert.equal(m('123456789'),'123.456.789');assert.equal(m('1234567890'),'123.456.789-0');
+ assert.equal(m('123456789012'),'12.345.678/9012');assert.equal(m('1234567890123'),'12.345.678/9012-3');assert.equal(m(''),'');assert.equal(m('isento'),'isento')});
